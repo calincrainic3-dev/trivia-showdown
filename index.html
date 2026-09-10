@@ -228,8 +228,23 @@ async function loadRoom(code){
     const res = await fetch(roomPath(code));
     if(!res.ok) return null;
     const data = await res.json();
-    return data || null;
+    if(!data) return null;
+    return normalizeState(data);
   }catch(e){ console.error('load failed', e); return null; }
+}
+function normalizeState(data){
+  data.players = data.players || {};
+  data.activeTeams = data.activeTeams || [];
+  data.teamNaming = data.teamNaming || {};
+  data.lockedOutTeams = data.lockedOutTeams || [];
+  data.teams = data.teams || {1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}};
+  if(!data.final) data.final = {stage:'wager', wagers:{}, answers:{}, graded:{}};
+  else{
+    data.final.wagers = data.final.wagers || {};
+    data.final.answers = data.final.answers || {};
+    data.final.graded = data.final.graded || {};
+  }
+  return data;
 }
 async function saveRoom(code, state){
   state.updatedAt = Date.now();
