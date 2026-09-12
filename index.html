@@ -66,6 +66,7 @@
   .buzz-btn.state-gold{background:var(--gold);color:var(--navy-deep);box-shadow:0 10px 0 var(--gold-dim);}
   .buzz-btn.state-green{background:#22c55e;box-shadow:0 10px 0 #15803d;}
   .buzz-btn.state-yellow{background:#eab308;color:#3a2c00;box-shadow:0 10px 0 #a16207;}
+  .buzz-btn.state-red{background:var(--red);box-shadow:0 10px 0 #a3232a;}
   .buzz-btn.state-locked{background:#3a4270;color:#8890b8;box-shadow:0 10px 0 #262d55;cursor:not-allowed;}
   .buzz-btn:disabled{cursor:not-allowed;}
   .legend{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--ink-dim);}
@@ -131,6 +132,7 @@ const ANIMALS = ['Flamingos','Otters','Badgers','Narwhals','Wolves','Falcons','R
 let myRole = null, myName = null, myRoomCode = null, pollTimer = null, lastStamp = null;
 let draftBoard = null, draftFinal = {question:'', answer:''};
 let localBuzzLock = false;
+let currentState = null;
 const app = document.getElementById('app');
 
 // ---------- standard packs ----------
@@ -237,6 +239,7 @@ function normalizeState(data){
   data.activeTeams = data.activeTeams || [];
   data.teamNaming = data.teamNaming || {};
   data.lockedOutTeams = data.lockedOutTeams || [];
+  data.earlyLockUntil = data.earlyLockUntil || {};
   data.teams = data.teams || {1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}};
   if(!data.final) data.final = {stage:'wager', wagers:{}, answers:{}, graded:{}};
   else{
@@ -276,16 +279,24 @@ async function pickHostVoice(){
   const enVoices = voices.filter(v=>v.lang && v.lang.toLowerCase().startsWith('en'));
   const pool = enVoices.length ? enVoices : voices;
   const keywords = ['male','david','daniel','alex','fred','george','mark','arthur','aaron','oliver','ryan','guy','tom'];
+  const premiumKeywords = ['natural','neural','online','enhanced','premium'];
   let best=null, bestScore=-999;
   pool.forEach(v=>{
     const name=v.name.toLowerCase(); let score=0;
     if(name.includes('female')) score -= 6;
     keywords.forEach(k=>{ if(name.includes(k)) score += 2; });
+    premiumKeywords.forEach(k=>{ if(name.includes(k)) score += 4; });
     if(v.lang==='en-US'||v.lang==='en-GB') score += 1;
+    if(v.localService===false) score += 1;
     if(score>bestScore){ bestScore=score; best=v; }
   });
   cachedVoice = best || pool[0] || null;
   return cachedVoice;
+}
+function estimateSpeechMs(introText, bodyText){
+  const words = `${introText} ${bodyText}`.trim().split(/\s+/).filter(Boolean).length;
+  const msPerWord = 400, pauseBetween = 450, buffer = 700;
+  return Math.max(1500, Math.round(words*msPerWord + pauseBetween + buffer));
 }
 function stopSpeaking(){ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }
 function speakClue(categoryName, value, clueText, onDone){
@@ -296,7 +307,7 @@ function speakClue(categoryName, value, clueText, onDone){
     if(categoryName) parts.push(value ? `${categoryName}, for ${value} dollars.` : categoryName+'.');
     const intro = parts.length ? new SpeechSynthesisUtterance(parts[0]) : null;
     const body = new SpeechSynthesisUtterance(clueText);
-    [intro, body].forEach(u=>{ if(!u) return; if(voice) u.voice=voice; u.rate=0.93; u.pitch=0.85; u.volume=1; });
+    [intro, body].forEach(u=>{ if(!u) return; if(voice) u.voice=voice; u.rate=0.95; u.pitch=1.0; u.volume=1; });
     if(intro){
       intro.onend = ()=> setTimeout(()=> window.speechSynthesis.speak(body), 450);
       intro.onerror = ()=> window.speechSynthesis.speak(body);
@@ -308,6 +319,27 @@ function speakClue(categoryName, value, clueText, onDone){
 }
 function testVoice(){
   speakClue('', '', "This is a quick sound check. If you can hear this clearly, your speakers are ready for game night.", ()=>{});
+}
+function playThinkTicks(durationSec){
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if(!Ctx) return;
+  const ctx = new Ctx();
+  let count = 0;
+  const id = setInterval(()=>{
+    if(count>=durationSec){ clearInterval(id); return; }
+    try{
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.frequency.value = 880; gain.gain.value = 0.04;
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.07);
+    }catch(e){}
+    count++;
+  }, 1000);
+}
+function buzzerEffectivelyOpen(state){
+  if(state.buzzerOpen) return true;
+  if(state.readingInProgress && state.readEndsAt) return Date.now() >= state.readEndsAt;
+  return false;
 }
 
 // ---------- board defaults ----------
@@ -325,7 +357,7 @@ function freshState(code){
     code, phase:'lobby', categories:draftBoard, finalQ:{question:draftFinal.question, answer:draftFinal.answer},
     players:{}, teams:{1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}}, activeTeams:[],
     teamNaming:{}, activeClue:null, readingInProgress:false, buzzerOpen:false, buzzedTeam:null, buzzedPlayer:null,
-    lockedOutTeams:[], controllingTeam:null, ddWager:null, ddStage:null, revealAnswer:false,
+    lockedOutTeams:[], earlyLockUntil:{}, readEndsAt:null, answerDeadline:null, controllingTeam:null, ddWager:null, ddStage:null, revealAnswer:false,
     final:{stage:'wager',wagers:{},answers:{},graded:{}}, updatedAt:Date.now()
   };
 }
@@ -505,7 +537,13 @@ function renderJoinScreen(){
     if(!code || !name){ err.textContent='Enter both a room code and a name.'; return; }
     const state = await loadRoom(code);
     if(!state){ err.textContent='No game found with that code. Double-check with the host.'; return; }
-    if(state.players[name]){ err.textContent='That name is already taken in this room — pick another.'; return; }
+    if(state.players[name]){
+      // Same name already in this room — treat as a reconnect rather than blocking them out.
+      myRole='player'; myName=name; myRoomCode=code;
+      startPolling();
+      render(state);
+      return;
+    }
     renderTeamPick(code, name, state);
   };
 }
@@ -651,10 +689,12 @@ function renderHostBoard(state){
           mutate(s=>{ if(s.activeClue && s.activeClue.c===c && s.activeClue.i===i){ s.readingInProgress=false; s.buzzerOpen=true; } });
         });
       }
+      const estMs = isDD ? 0 : estimateSpeechMs(`${cat.name}, for ${clue.value} dollars.`, clue.text);
       mutate(s=>{
         s.activeClue={c,i}; s.revealAnswer=false; s.lockedOutTeams=[]; s.buzzedTeam=null; s.buzzedPlayer=null;
-        if(isDD){ s.phase='daily_double'; s.ddStage='wager'; s.ddWager={team:s.controllingTeam||null, amount:null}; s.readingInProgress=false; s.buzzerOpen=false; }
-        else { s.phase='clue'; s.readingInProgress=true; s.buzzerOpen=false; }
+        s.earlyLockUntil={}; s.answerDeadline=null;
+        if(isDD){ s.phase='daily_double'; s.ddStage='wager'; s.ddWager={team:s.controllingTeam||null, amount:null}; s.readingInProgress=false; s.buzzerOpen=false; s.readEndsAt=null; }
+        else { s.phase='clue'; s.readingInProgress=true; s.buzzerOpen=false; s.readEndsAt=Date.now()+estMs; }
       });
     };
   });
@@ -665,6 +705,22 @@ function renderHostClue(state){
   const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
   const cat = state.categories[state.activeClue.c];
   const isSteal = state.lockedOutTeams.length > 0;
+  const effOpen = buzzerEffectivelyOpen(state);
+
+  if(state.buzzedTeam && state.answerDeadline && Date.now() > state.answerDeadline){
+    mutate(s=>{
+      if(s.buzzedTeam && s.answerDeadline && Date.now() > s.answerDeadline){
+        const cl=s.categories[s.activeClue.c].clues[s.activeClue.i];
+        s.teams[s.buzzedTeam].score -= cl.value; s.lockedOutTeams.push(s.buzzedTeam);
+        s.buzzedTeam=null; s.buzzedPlayer=null; s.answerDeadline=null;
+        const remaining = s.activeTeams.filter(n=>!s.lockedOutTeams.includes(n));
+        s.buzzerOpen = remaining.length > 0;
+      }
+    });
+    return;
+  }
+
+  const secsLeft = state.buzzedTeam && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
   app.innerHTML = `
     ${topbarRoom(state,'Host')}
     <div class="spotlight">
@@ -674,16 +730,16 @@ function renderHostClue(state){
       ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
     </div>
     <div class="reading-status">
-      ${state.readingInProgress ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
-        : (state.buzzedTeam ? `🟢 ${escapeHtml(state.buzzedPlayer)} from ${escapeHtml(teamDisplayName(state,state.buzzedTeam))} buzzed in first!`
-        : (state.buzzerOpen ? (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…') : 'Buzzers closed'))}
+      ${!effOpen ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
+        : (state.buzzedTeam ? `🟢 ${escapeHtml(state.buzzedPlayer)} from ${escapeHtml(teamDisplayName(state,state.buzzedTeam))} buzzed in first!${secsLeft!==null?` (${secsLeft}s to answer)`:''}`
+        : (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…'))}
     </div>
     ${state.lockedOutTeams.length ? `<div class="hint center" style="margin-top:6px;">Locked out on this clue: ${state.lockedOutTeams.map(n=>teamDisplayName(state,n)).join(', ')}</div>` : ''}
     <div class="row" style="margin-top:16px;">
       <button class="btn teal" id="markCorrect" ${!state.buzzedTeam?'disabled':''}>✔ Correct</button>
       <button class="btn danger" id="markWrong" ${!state.buzzedTeam?'disabled':''}>✘ Wrong</button>
       <button class="btn secondary" id="revealAns">Reveal Response</button>
-      ${state.readingInProgress ? `<button class="btn secondary" id="skipReading">Skip Reading / Open Buzzers</button>` : ''}
+      ${!effOpen ? `<button class="btn secondary" id="skipReading">Skip Reading / Open Buzzers</button>` : ''}
     </div>
     <div class="judge-hint">💡 Remember: real Jeopardy doesn't require exact wording or strict question-form phrasing — judge whether the answer is substantively correct.</div>
     <div class="center" style="margin-top:14px;"><button class="btn secondary" id="backBoard">Back to Board</button></div>
@@ -692,11 +748,11 @@ function renderHostClue(state){
   document.getElementById('markCorrect').onclick = ()=> mutate(s=>{
     const cl=s.categories[s.activeClue.c].clues[s.activeClue.i];
     s.teams[s.buzzedTeam].score += cl.value; s.controllingTeam=s.buzzedTeam; cl.answered=true;
-    s.phase='board'; s.activeClue=null; s.buzzedTeam=null; s.buzzedPlayer=null; s.buzzerOpen=false; s.lockedOutTeams=[]; s.readingInProgress=false;
+    s.phase='board'; s.activeClue=null; s.buzzedTeam=null; s.buzzedPlayer=null; s.buzzerOpen=false; s.lockedOutTeams=[]; s.readingInProgress=false; s.answerDeadline=null;
   });
   document.getElementById('markWrong').onclick = ()=> mutate(s=>{
     const cl=s.categories[s.activeClue.c].clues[s.activeClue.i];
-    s.teams[s.buzzedTeam].score -= cl.value; s.lockedOutTeams.push(s.buzzedTeam); s.buzzedTeam=null; s.buzzedPlayer=null;
+    s.teams[s.buzzedTeam].score -= cl.value; s.lockedOutTeams.push(s.buzzedTeam); s.buzzedTeam=null; s.buzzedPlayer=null; s.answerDeadline=null;
     const remaining = s.activeTeams.filter(n=>!s.lockedOutTeams.includes(n));
     s.buzzerOpen = remaining.length > 0;
   });
@@ -706,19 +762,45 @@ function renderHostClue(state){
   document.getElementById('backBoard').onclick = ()=> mutate(s=>{
     stopSpeaking();
     const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true;
-    s.phase='board'; s.activeClue=null; s.buzzedTeam=null; s.buzzedPlayer=null; s.buzzerOpen=false; s.lockedOutTeams=[]; s.readingInProgress=false;
+    s.phase='board'; s.activeClue=null; s.buzzedTeam=null; s.buzzedPlayer=null; s.buzzerOpen=false; s.lockedOutTeams=[]; s.readingInProgress=false; s.answerDeadline=null;
   });
 }
 
+let lastSpokenDD = null;
 function renderHostDailyDouble(state){
   const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
   const cat = state.categories[state.activeClue.c];
   const actives = state.activeTeams;
   const wagerTeam = state.ddWager.team;
+  const ddKey = `${state.activeClue.c}-${state.activeClue.i}`;
+
+  if(state.ddStage==='reveal' && lastSpokenDD !== ddKey){
+    lastSpokenDD = ddKey;
+    speakClue(cat.name, '', clue.text, ()=>{
+      mutate(s=>{
+        if(s.activeClue && s.activeClue.c===state.activeClue.c && s.activeClue.i===state.activeClue.i && s.ddStage==='reveal'){
+          s.answerDeadline = Date.now()+5000;
+        }
+      });
+    });
+  }
+  if(state.ddStage==='reveal' && state.answerDeadline && Date.now() > state.answerDeadline){
+    mutate(s=>{
+      if(s.ddStage==='reveal' && s.answerDeadline && Date.now() > s.answerDeadline){
+        s.teams[s.ddWager.team].score -= s.ddWager.amount;
+        const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true;
+        s.phase='board'; s.activeClue=null; s.ddWager=null; s.ddStage=null; s.revealAnswer=false; s.answerDeadline=null;
+      }
+    });
+    return;
+  }
+  const secsLeft = state.ddStage==='reveal' && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
+  const isTrueDD = state.ddWager.trueDD;
+
   app.innerHTML = `
     ${topbarRoom(state,'Host')}
     <div class="spotlight">
-      <div class="cat-label" style="color:var(--red);">⭐ DAILY DOUBLE ⭐</div>
+      <div class="cat-label" style="color:var(--red);">⭐ DAILY DOUBLE${isTrueDD?' — TRUE DAILY DOUBLE! 🌟':''} ⭐</div>
       <div class="value">${escapeHtml(cat.name)} · Base value ${fmt(clue.value)}</div>
       ${state.ddStage==='wager' ? `
         <div class="hint" style="margin:10px 0 16px;">${wagerTeam ? `Waiting for <b>${escapeHtml(teamDisplayName(state,wagerTeam))}</b> to enter a wager on their device…` : 'No team is currently "in control" yet — pick who is wagering:'}</div>
@@ -726,7 +808,7 @@ function renderHostDailyDouble(state){
           <div style="margin-top:10px;"><button class="btn secondary" id="setWagerer">Confirm Team</button></div>` : ''}
       ` : `
         <div class="clue-text">${escapeHtml(clue.text)}</div>
-        <div class="hint" style="margin-top:8px;">${escapeHtml(teamDisplayName(state,wagerTeam))} wagered ${fmt(state.ddWager.amount)}</div>
+        <div class="hint" style="margin-top:8px;">${escapeHtml(teamDisplayName(state,wagerTeam))} wagered ${fmt(state.ddWager.amount)}${secsLeft!==null?` · ${secsLeft}s to answer`:''}</div>
         ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
       `}
     </div>
@@ -747,7 +829,7 @@ function renderHostDailyDouble(state){
   const ddReveal = document.getElementById('ddReveal');
   if(ddReveal) ddReveal.onclick = ()=> mutate(s=>{ s.revealAnswer=true; });
   document.getElementById('backBoard').onclick = ()=> mutate(s=>{ stopSpeaking(); finishDD(s); });
-  function finishDD(s){ const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true; s.phase='board'; s.activeClue=null; s.ddWager=null; s.ddStage=null; s.revealAnswer=false; }
+  function finishDD(s){ const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true; s.phase='board'; s.activeClue=null; s.ddWager=null; s.ddStage=null; s.revealAnswer=false; s.answerDeadline=null; }
 }
 
 function renderHostFinal(state){
@@ -778,7 +860,11 @@ function renderHostFinal(state){
     </div>
   `;
   const revealFinal = document.getElementById('revealFinal');
-  if(revealFinal) revealFinal.onclick = ()=>{ speakClue('', '', state.finalQ.question, ()=>{}); mutate(s=>{ s.final.stage='answer'; }); };
+  if(revealFinal) revealFinal.onclick = ()=>{
+    speakClue('', '', state.finalQ.question, ()=>{});
+    playThinkTicks(30);
+    mutate(s=>{ s.final.stage='answer'; s.final.answerDeadline=Date.now()+30000; });
+  };
   const startGrading = document.getElementById('startGrading');
   if(startGrading) startGrading.onclick = ()=> mutate(s=>{ s.final.stage='grading'; });
   app.querySelectorAll('[data-v]').forEach(btn=>{
@@ -875,8 +961,12 @@ function renderPlayerBoard(state){
 }
 
 function computeBuzzState(state, myTeam, myName){
+  const now = Date.now();
+  const effOpen = buzzerEffectivelyOpen(state);
   const isSteal = state.lockedOutTeams.length > 0;
-  if(state.lockedOutTeams.includes(myTeam)) return {cls:'state-locked', label: state.readingInProgress ? 'LISTEN…' : 'LOCKED OUT', disabled:true, sub:''};
+  const earlyUntil = state.earlyLockUntil && state.earlyLockUntil[myTeam];
+  if(earlyUntil && now < earlyUntil) return {cls:'state-red', label:'TOO EARLY!', disabled:true, sub:'A quick penalty for jumping the gun — try again in a moment.'};
+  if(state.lockedOutTeams.includes(myTeam)) return {cls:'state-locked', label: !effOpen ? 'LISTEN…' : 'LOCKED OUT', disabled:true, sub:''};
   if(state.buzzedTeam){
     if(state.buzzedTeam === myTeam){
       if(state.buzzedPlayer === myName) return {cls:'state-green', label:"YOU'RE UP — ANSWER NOW!", disabled:true, sub:'Speak your answer out loud.'};
@@ -884,9 +974,8 @@ function computeBuzzState(state, myTeam, myName){
     }
     return {cls:'state-locked', label:`${teamDisplayName(state,state.buzzedTeam).toUpperCase()} BUZZED IN`, disabled:true, sub:''};
   }
-  if(state.readingInProgress) return {cls:'state-blue', label:"WAIT — DON'T BUZZ YET", disabled:false, sub:'Buzzing now locks out your whole team.'};
-  if(state.buzzerOpen) return isSteal ? {cls:'state-yellow', label:'STEAL — BUZZ IN!', disabled:false, sub:'Your team can steal the points.'} : {cls:'state-gold', label:'BUZZ IN', disabled:false, sub:''};
-  return {cls:'state-blue', label:'WAIT…', disabled:true, sub:''};
+  if(!effOpen) return {cls:'state-blue', label:"WAIT — DON'T BUZZ YET", disabled:false, sub:'Buzzing now adds a short penalty for your team.'};
+  return isSteal ? {cls:'state-yellow', label:'STEAL — BUZZ IN!', disabled:false, sub:'Your team can steal the points.'} : {cls:'state-gold', label:'BUZZ IN', disabled:false, sub:''};
 }
 
 function renderPlayerClue(state){
@@ -894,6 +983,7 @@ function renderPlayerClue(state){
   const cat = state.categories[state.activeClue.c];
   const myTeam = state.players[myName].team;
   const bs = computeBuzzState(state, myTeam, myName);
+  const secsLeft = state.buzzedTeam===myTeam && state.buzzedPlayer===myName && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
   app.innerHTML = `
     ${topbarRoom(state,myName)}
     <div class="spotlight">
@@ -902,13 +992,14 @@ function renderPlayerClue(state){
       <div class="clue-text">${escapeHtml(clue.text)}</div>
       ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
     </div>
-    <button class="buzz-btn ${bs.cls}" id="buzzBtn" style="margin-top:18px;" ${bs.disabled?'disabled':''}>${bs.label}</button>
+    <button class="buzz-btn ${bs.cls}" id="buzzBtn" style="margin-top:18px;" ${bs.disabled?'disabled':''}>${bs.label}${secsLeft!==null?` (${secsLeft}s)`:''}</button>
     ${bs.sub ? `<div class="hint center" style="margin-top:8px;">${bs.sub}</div>` : ''}
     <div class="legend">
       <span><i style="background:#2563eb;"></i> Wait</span>
       <span><i style="background:var(--gold);"></i> Ready</span>
       <span><i style="background:#22c55e;"></i> You're up</span>
       <span><i style="background:#eab308;"></i> Steal</span>
+      <span><i style="background:var(--red);"></i> Too early</span>
       <span><i style="background:#3a4270;"></i> Locked</span>
     </div>
     ${teamScoreboardHtml(state)}
@@ -921,8 +1012,15 @@ function renderPlayerClue(state){
       await mutate(s=>{
         const team = s.players[myName].team;
         if(s.lockedOutTeams.includes(team)) return;
-        if(s.readingInProgress && !s.buzzerOpen){ s.lockedOutTeams.push(team); s.earlyBuzzBy = myName; return; }
-        if(s.buzzerOpen && !s.buzzedTeam){ s.buzzedTeam = team; s.buzzedPlayer = myName; }
+        const eu = s.earlyLockUntil && s.earlyLockUntil[team];
+        if(eu && Date.now() < eu) return;
+        if(!buzzerEffectivelyOpen(s)){
+          s.earlyLockUntil = s.earlyLockUntil || {};
+          s.earlyLockUntil[team] = Date.now()+250;
+          s.earlyBuzzBy = myName;
+          return;
+        }
+        if(!s.buzzedTeam){ s.buzzedTeam = team; s.buzzedPlayer = myName; s.answerDeadline = Date.now()+5000; if(!s.buzzerOpen) s.buzzerOpen = true; }
       });
       localBuzzLock = false;
     };
@@ -936,31 +1034,47 @@ function renderPlayerDailyDouble(state){
   const isWagerer = state.ddWager && state.ddWager.team === myTeam;
   const teamScore = state.teams[myTeam].score;
   const maxWager = Math.max(1000, teamScore);
+  const minWager = Math.min(5, maxWager);
+  const secsLeft = state.ddStage==='reveal' && isWagerer && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
   app.innerHTML = `
     ${topbarRoom(state,myName)}
     <div class="spotlight">
       <div class="cat-label" style="color:var(--red);">⭐ DAILY DOUBLE ⭐</div>
       <div class="value">${escapeHtml(cat.name)}</div>
       ${state.ddStage==='wager' ? `
-        ${isWagerer ? `<div class="field" style="max-width:220px;margin:14px auto 0;"><label>Your Team's Wager (max ${fmt(maxWager)})</label><input type="number" id="wagerAmt" min="0" max="${maxWager}" value="0"></div>
-          <button class="btn" id="submitWager" style="margin-top:10px;">Lock In Wager</button>`
+        ${isWagerer ? `<div class="field" style="max-width:220px;margin:14px auto 0;"><label>Your Team's Wager (${fmt(minWager)}–${fmt(maxWager)})</label><input type="number" id="wagerAmt" min="${minWager}" max="${maxWager}" value="${minWager}"></div>
+          <div class="row" style="max-width:320px;margin:0 auto;">
+            <button class="btn secondary" id="betItAll" type="button">Bet It All</button>
+            <button class="btn" id="submitWager">Lock In Wager</button>
+          </div>`
           : `<div class="hint" style="margin-top:14px;">${state.ddWager && state.ddWager.team ? `${escapeHtml(teamDisplayName(state,state.ddWager.team))} is wagering…` : 'Host is choosing who wagers…'}</div>`}
-      ` : `
-        <div class="clue-text">${escapeHtml(clue.text)}</div>
-        <div class="hint" style="margin-top:8px;">${escapeHtml(teamDisplayName(state,state.ddWager.team))} wagered ${fmt(state.ddWager.amount)}</div>
-        ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
-      `}
+      ` : (
+        isWagerer ? `
+          <div class="clue-text">${escapeHtml(clue.text)}</div>
+          <div class="hint" style="margin-top:8px;">You wagered ${fmt(state.ddWager.amount)}${state.ddWager.trueDD?' — True Daily Double! 🌟':''}${secsLeft!==null?` · ${secsLeft}s to answer`:''}</div>
+          ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
+        ` : `<div class="hint" style="margin-top:14px;">This is a Daily Double for ${escapeHtml(teamDisplayName(state,state.ddWager.team))} — hang tight while they answer.</div>`
+      )}
     </div>
     ${teamScoreboardHtml(state)}
   `;
+  const betItAll = document.getElementById('betItAll');
+  if(betItAll) betItAll.onclick = ()=>{ document.getElementById('wagerAmt').value = maxWager; };
   const submitWager = document.getElementById('submitWager');
   if(submitWager) submitWager.onclick = ()=>{
-    const amt = Math.max(0, Math.min(maxWager, +document.getElementById('wagerAmt').value || 0));
-    mutate(s=>{ if(s.ddWager.amount!==null) return; s.ddWager.amount=amt; s.ddStage='reveal'; }).then(()=> speakClue(cat.name,'',clue.text,()=>{}));
+    const amt = Math.max(minWager, Math.min(maxWager, +document.getElementById('wagerAmt').value || minWager));
+    mutate(s=>{
+      if(s.ddWager.amount != null) return;
+      s.ddWager.amount = amt;
+      s.ddWager.trueDD = (amt === Math.max(0, s.teams[myTeam].score) && amt > 0);
+      s.ddStage = 'reveal';
+    });
   };
 }
 
+let finalCountdownTimer = null;
 function renderPlayerFinal(state){
+  if(finalCountdownTimer){ clearInterval(finalCountdownTimer); finalCountdownTimer=null; }
   const f = state.final; const myTeam = state.players[myName].team; const teamScore = state.teams[myTeam].score;
   const wagered = f.wagers[myTeam] !== undefined; const answered = f.answers[myTeam] !== undefined;
   app.innerHTML = `
@@ -972,6 +1086,7 @@ function renderPlayerFinal(state){
           <button class="btn" id="submitFWager" style="margin-top:10px;">Lock In Wager</button>`}` : ''}
       ${f.stage==='answer' ? `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div>
         ${answered ? `<div class="hint">Answer submitted — waiting on other teams…</div>` : `
+          <div id="finalCountdown" class="hint" style="color:var(--gold);font-weight:700;margin-bottom:8px;"></div>
           <div class="field" style="max-width:340px;margin:0 auto;"><label>Your Team's Answer</label><input type="text" id="fAnswer" placeholder="Type your final answer"></div>
           <button class="btn" id="submitFAnswer" style="margin-top:10px;">Submit Answer</button>`}` : ''}
       ${f.stage==='grading' ? `<div class="hint">The host is grading answers now…</div>` : ''}
@@ -980,8 +1095,25 @@ function renderPlayerFinal(state){
   `;
   const sw = document.getElementById('submitFWager');
   if(sw) sw.onclick = ()=>{ const amt=Math.max(0,Math.min(Math.max(0,teamScore), +document.getElementById('fWager').value||0)); mutate(s=>{ if(s.final.wagers[myTeam]===undefined) s.final.wagers[myTeam]=amt; }); };
+  const submitAnswer = (val)=> mutate(s=>{ if(s.final.answers[myTeam]===undefined) s.final.answers[myTeam] = val; });
   const sa = document.getElementById('submitFAnswer');
-  if(sa) sa.onclick = ()=>{ const ans=document.getElementById('fAnswer').value.trim(); if(!ans) return; mutate(s=>{ if(s.final.answers[myTeam]===undefined) s.final.answers[myTeam]=ans; }); };
+  if(sa) sa.onclick = ()=>{ const ans=document.getElementById('fAnswer').value.trim(); if(!ans) return; submitAnswer(ans); };
+  if(f.stage==='answer' && !answered && state.final.answerDeadline){
+    const deadline = state.final.answerDeadline;
+    const cdEl = document.getElementById('finalCountdown');
+    const tick = ()=>{
+      const secs = Math.max(0, Math.ceil((deadline-Date.now())/1000));
+      if(cdEl) cdEl.textContent = `⏳ ${secs}s left to answer`;
+      if(secs<=0){
+        clearInterval(finalCountdownTimer); finalCountdownTimer=null;
+        const inputEl = document.getElementById('fAnswer');
+        const val = inputEl ? inputEl.value.trim() : '';
+        submitAnswer(val || '(no answer — time expired)');
+      }
+    };
+    tick();
+    finalCountdownTimer = setInterval(tick, 250);
+  }
 }
 
 // =================================================================
@@ -989,6 +1121,7 @@ function renderPlayerFinal(state){
 // =================================================================
 function render(state){
   if(!state) return;
+  currentState = state;
   if(myRole==='host'){
     if(state.phase==='lobby') return renderHostLobby(state);
     if(state.phase==='team_naming') return renderHostTeamNaming(state);
@@ -1007,6 +1140,13 @@ function render(state){
     if(state.phase==='end') return renderEnd(state, false);
   }
 }
+
+setInterval(()=>{
+  if(!currentState) return;
+  const p = currentState.phase;
+  const shouldTick = (p==='clue') || (p==='daily_double' && currentState.ddStage==='reveal');
+  if(shouldTick) render(currentState);
+}, 200);
 
 renderHome();
 </script>
