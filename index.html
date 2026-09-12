@@ -427,9 +427,10 @@ function renderHome(){
       A team-based Jeopardy-style party game. One host screen runs the board and reads clues aloud;
       everyone else joins from their phone with a room code, picks a team, and buzzes in.
     </p>
-    <div class="home-grid">
-      <div class="choice-card" id="goHost"><div class="icon">🎙️</div><h3 class="display">Host a Game</h3><div class="hint">Build a custom board or pick a ready-made pack, then run it from this screen.</div></div>
+    <div class="home-grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="choice-card" id="goHost"><div class="icon">🎙️</div><h3 class="display">Host a Game</h3><div class="hint">Build a custom board or pick a ready-made pack, then run it privately from this screen. Shows the correct answer — keep this screen to yourself.</div></div>
       <div class="choice-card" id="goJoin"><div class="icon">📱</div><h3 class="display">Join a Game</h3><div class="hint">Enter the room code, pick a team, and get ready to buzz.</div></div>
+      <div class="choice-card" id="goDisplay"><div class="icon">📺</div><h3 class="display">TV Display</h3><div class="hint">A safe-to-project view for a shared screen or TV — clues and scores, never the answer.</div></div>
     </div>
     <footer class="smallnote">
       Players don't need to share Wi-Fi — anyone with this page's link can join with the room code from anywhere.
@@ -439,6 +440,32 @@ function renderHome(){
   `;
   document.getElementById('goHost').onclick = renderBoardChoice;
   document.getElementById('goJoin').onclick = renderJoinScreen;
+  document.getElementById('goDisplay').onclick = renderDisplayJoin;
+}
+
+function renderDisplayJoin(){
+  app.innerHTML = `
+    <div class="topbar"><div class="brand"><div class="dot"></div><h1 class="display">TV Display</h1></div>
+      <button class="btn secondary" id="backHome">← Back</button></div>
+    <div class="browser-note">📺 This view is safe to project on a shared screen — it never shows the correct response, only clues, buzzer status, and scores.</div>
+    <div class="card" style="max-width:420px;margin:0 auto;">
+      <div class="field"><label>Room Code</label>
+        <input type="text" id="displayCodeIn" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:0.2em;font-family:'JetBrains Mono',monospace;font-size:20px;text-align:center;"></div>
+      <button class="btn block" id="displayGo">Open Display →</button>
+      <div id="displayErr" class="hint" style="color:var(--red);margin-top:10px;"></div>
+    </div>
+  `;
+  document.getElementById('backHome').onclick = renderHome;
+  document.getElementById('displayGo').onclick = async ()=>{
+    const code = document.getElementById('displayCodeIn').value.trim().toUpperCase();
+    const err = document.getElementById('displayErr');
+    if(!code){ err.textContent='Enter a room code.'; return; }
+    const state = await loadRoom(code);
+    if(!state){ err.textContent='No game found with that code. Double-check with the host.'; return; }
+    myRole='display'; myRoomCode=code;
+    startPolling();
+    render(state);
+  };
 }
 
 function renderBoardChoice(){
@@ -619,6 +646,7 @@ function renderHostLobby(state){
       <div class="display" style="font-size:64px;letter-spacing:0.15em;color:var(--gold);">${state.code}</div>
       <div class="hint" style="margin-top:6px;">They tap "Join a Game", enter the code, then pick Team 1, 2, or 3.</div>
       <button class="btn secondary" id="testVoiceBtn" style="margin-top:16px;">🔊 Test the Announcer Voice</button>
+      <button class="btn secondary" id="openDisplayBtn" style="margin-top:10px;">📺 Open TV Display (new tab)</button>
       <div class="row" style="margin-top:20px;max-width:600px;margin-left:auto;margin-right:auto;">
         ${[1,2,3].map(n=>`<div class="card" style="padding:14px;border-left:5px solid ${TEAM_COLORS[n]};">
           <b>Team ${n}</b><div class="hint">${computeMembers(state,n).length} joined</div>
@@ -629,6 +657,11 @@ function renderHostLobby(state){
     </div>
   `;
   document.getElementById('testVoiceBtn').onclick = testVoice;
+  document.getElementById('openDisplayBtn').onclick = ()=>{
+    const url = new URL(location.href);
+    url.search = '?display=' + state.code;
+    window.open(url.toString(), '_blank');
+  };
   document.getElementById('cancelRoom').onclick = ()=>{
     if(!confirm('Cancel this game? Anyone with the room code will no longer be able to join.')) return;
     stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; renderHome();
@@ -1097,6 +1130,81 @@ function renderPlayerFinal(state){
 }
 
 // =================================================================
+// TV DISPLAY VIEWS (public-safe — never shows the correct response)
+// =================================================================
+function renderDisplayWaiting(state){
+  app.innerHTML = `
+    ${topbarRoom(state,'Display')}
+    <div class="card center"><div class="display" style="font-size:40px;color:var(--gold);">${state.code}</div>
+      <div class="hint" style="margin-top:8px;">Waiting for the game to start…</div></div>
+  `;
+}
+function renderDisplayBoard(state){
+  const cats = state.categories;
+  app.innerHTML = `
+    ${topbarRoom(state,'Display')}
+    <div class="card">
+      <div class="board">
+        ${cats.map(c=>`<div class="cat-head">${escapeHtml(c.name)}</div>`).join('')}
+        ${VALUES.map((v,li)=>cats.map((c)=>{ const cl=c.clues[li]; return `<div class="clue-tile used" style="cursor:default;">${cl.answered?'':fmt(cl.value)}</div>`; }).join('')).join('')}
+      </div>
+      ${teamScoreboardHtml(state)}
+    </div>
+  `;
+}
+function renderDisplayClue(state){
+  const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
+  const cat = state.categories[state.activeClue.c];
+  const isSteal = state.lockedOutTeams.length > 0;
+  const effOpen = buzzerEffectivelyOpen(state);
+  const secsLeft = state.buzzedTeam && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
+  app.innerHTML = `
+    ${topbarRoom(state,'Display')}
+    <div class="spotlight">
+      <div class="cat-label">${escapeHtml(cat.name)}</div>
+      <div class="value">${fmt(clue.value)}</div>
+      <div class="clue-text">${escapeHtml(clue.text)}</div>
+    </div>
+    <div class="reading-status">
+      ${!effOpen ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
+        : (state.buzzedTeam ? `🟢 ${escapeHtml(state.buzzedPlayer)} from ${escapeHtml(teamDisplayName(state,state.buzzedTeam))} buzzed in first!${secsLeft!==null?(secsLeft>0?` (${secsLeft}s to answer)`:` — judging…`):''}`
+        : (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…'))}
+    </div>
+    ${teamScoreboardHtml(state)}
+  `;
+}
+function renderDisplayDailyDouble(state){
+  const cat = state.categories[state.activeClue.c];
+  const wagerTeam = state.ddWager.team;
+  app.innerHTML = `
+    ${topbarRoom(state,'Display')}
+    <div class="spotlight">
+      <div class="cat-label" style="color:var(--red);">⭐ DAILY DOUBLE ⭐</div>
+      <div class="value">${escapeHtml(cat.name)}</div>
+      <div class="hint" style="margin-top:14px;">${wagerTeam ? `${escapeHtml(teamDisplayName(state,wagerTeam))} ${state.ddStage==='wager' ? 'is wagering…' : `wagered ${fmt(state.ddWager.amount)}${state.ddWager.trueDD?' — True Daily Double! 🌟':''}`}` : 'Choosing who wagers…'}</div>
+    </div>
+    ${teamScoreboardHtml(state)}
+  `;
+}
+function renderDisplayFinal(state){
+  const f = state.final; const actives = state.activeTeams;
+  app.innerHTML = `
+    ${topbarRoom(state,'Display · Final Round')}
+    <div class="card">
+      <div class="spotlight" style="margin-top:0;">
+        <div class="clue-text">${f.stage!=='wager' ? escapeHtml(state.finalQ.question) : '🔒 Final clue — hidden until wagers are in'}</div>
+      </div>
+      <div class="hint center" style="margin-top:14px;">
+        ${f.stage==='wager' ? `Wagers in: ${actives.filter(n=>f.wagers[n]!==undefined).length}/${actives.length}` : ''}
+        ${f.stage==='answer' ? `Answers in: ${actives.filter(n=>f.answers[n]!==undefined).length}/${actives.length}` : ''}
+        ${f.stage==='grading' ? 'The host is judging answers…' : ''}
+      </div>
+      ${teamScoreboardHtml(state)}
+    </div>
+  `;
+}
+
+// =================================================================
 // ROUTER
 // =================================================================
 function render(state){
@@ -1118,6 +1226,13 @@ function render(state){
     if(state.phase==='daily_double') return renderPlayerDailyDouble(state);
     if(state.phase==='final') return renderPlayerFinal(state);
     if(state.phase==='end') return renderEnd(state, false);
+  } else if(myRole==='display'){
+    if(state.phase==='lobby' || state.phase==='team_naming') return renderDisplayWaiting(state);
+    if(state.phase==='board') return renderDisplayBoard(state);
+    if(state.phase==='clue') return renderDisplayClue(state);
+    if(state.phase==='daily_double') return renderDisplayDailyDouble(state);
+    if(state.phase==='final') return renderDisplayFinal(state);
+    if(state.phase==='end') return renderEnd(state, false);
   }
 }
 
@@ -1128,7 +1243,18 @@ setInterval(()=>{
   if(shouldTick) render(currentState);
 }, 200);
 
-renderHome();
+(function boot(){
+  const params = new URLSearchParams(location.search);
+  const dCode = params.get('display');
+  if(dCode){
+    loadRoom(dCode.toUpperCase()).then(state=>{
+      if(state){ myRole='display'; myRoomCode=dCode.toUpperCase(); startPolling(); render(state); }
+      else renderDisplayJoin();
+    });
+  } else {
+    renderHome();
+  }
+})();
 </script>
 </body>
 </html>
