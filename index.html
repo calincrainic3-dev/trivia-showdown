@@ -130,6 +130,8 @@ const ADJECTIVES = ['Ferocious','Sneaky','Mighty','Rowdy','Electric','Sly','Turb
 const ANIMALS = ['Flamingos','Otters','Badgers','Narwhals','Wolves','Falcons','Raccoons','Platypuses','Hedgehogs','Piranhas','Yaks','Meerkats','Wombats','Toucans','Jackrabbits','Porcupines','Iguanas'];
 
 let myRole = null, myName = null, myRoomCode = null, pollTimer = null, lastStamp = null;
+let myHostToken = null;
+function genHostToken(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 let draftBoard = null, draftFinal = {question:'', answer:''};
 let localBuzzLock = false;
 let currentState = null;
@@ -445,11 +447,43 @@ function renderHome(){
       Players don't need to share Wi-Fi — anyone with this page's link can join with the room code from anywhere.
       Clue reading uses your browser's built-in text-to-speech, tuned for a game-show pace — it isn't a real person's voice.
       Updates sync every ~1–2 seconds, not instantly.
+      <br><br>Lost your host screen mid-game (crash, closed tab, power blip)? <a href="#" id="resumeHostLink" style="color:var(--teal);">Resume hosting with your room code →</a>
     </footer>
   `;
   document.getElementById('goHost').onclick = renderBoardChoice;
   document.getElementById('goJoin').onclick = renderJoinScreen;
   document.getElementById('goDisplay').onclick = renderDisplayJoin;
+  document.getElementById('resumeHostLink').onclick = (e)=>{ e.preventDefault(); renderResumeHost(); };
+}
+
+function renderResumeHost(){
+  app.innerHTML = `
+    <div class="topbar"><div class="brand"><div class="dot"></div><h1 class="display">Resume Hosting</h1></div>
+      <button class="btn secondary" id="backHome">← Back</button></div>
+    <div class="browser-note">🔑 Your game's data is safe in the cloud even if your screen crashed or lost power — this just reconnects your host controls to it. Nothing about the game gets reset.</div>
+    <div class="card" style="max-width:420px;margin:0 auto;">
+      <div class="field"><label>Room Code</label>
+        <input type="text" id="resumeCodeIn" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:0.2em;font-family:'JetBrains Mono',monospace;font-size:20px;text-align:center;"></div>
+      <button class="btn block" id="resumeGo">Resume Hosting →</button>
+      <div id="resumeErr" class="hint" style="color:var(--red);margin-top:10px;"></div>
+    </div>
+  `;
+  document.getElementById('backHome').onclick = renderHome;
+  document.getElementById('resumeGo').onclick = async ()=>{
+    const code = document.getElementById('resumeCodeIn').value.trim().toUpperCase();
+    const err = document.getElementById('resumeErr');
+    if(!code){ err.textContent='Enter a room code.'; return; }
+    const state = await loadRoom(code);
+    if(!state){ err.textContent='No game found with that code.'; return; }
+    if(state.hostToken){
+      const ok = confirm('Another device may currently be hosting this room. Taking over will disconnect their host controls — the game itself will be unaffected. Continue?');
+      if(!ok) return;
+    }
+    myRole='host'; myRoomCode=code;
+    myHostToken = genHostToken();
+    await mutate(s=>{ s.hostToken = myHostToken; });
+    startPolling();
+  };
 }
 
 function renderDisplayJoin(){
@@ -546,7 +580,9 @@ function renderHostSetup(){
     let code=genCode(); let existing=await loadRoom(code); let tries=0;
     while(existing && tries<5){ code=genCode(); existing=await loadRoom(code); tries++; }
     myRole='host'; myRoomCode=code;
+    myHostToken = genHostToken();
     const state = freshState(code);
+    state.hostToken = myHostToken;
     await saveRoom(code, state);
     lastStamp = state.updatedAt;
     startPolling();
@@ -673,7 +709,7 @@ function renderHostLobby(state){
   };
   document.getElementById('cancelRoom').onclick = ()=>{
     if(!confirm('Cancel this game? Anyone with the room code will no longer be able to join.')) return;
-    stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; renderHome();
+    stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; myHostToken=null; renderHome();
   };
   document.getElementById('startGame').onclick = ()=> mutate(s=>{
     const actives2 = activeTeamNumbers(s); s.activeTeams = actives2;
@@ -926,7 +962,7 @@ function renderEnd(state, isHost){
       ${isHost ? `<button class="btn" id="newGame" style="margin-top:22px;">Start a New Game</button>` : `<div class="hint" style="margin-top:20px;">Thanks for playing!</div>`}
     </div>
   `;
-  if(isHost) document.getElementById('newGame').onclick = ()=>{ stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; renderHome(); };
+  if(isHost) document.getElementById('newGame').onclick = ()=>{ stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; myHostToken=null; renderHome(); };
 }
 
 // =================================================================
@@ -1242,13 +1278,28 @@ function renderDisplayFinal(state){
   `;
 }
 
-// =================================================================
-// ROUTER
-// =================================================================
+function renderHostSuperseded(state){
+  app.innerHTML = `
+    ${topbarRoom(state,'Host — Taken Over')}
+    <div class="card center">
+      <div class="display" style="font-size:24px;color:var(--red);margin-bottom:10px;">⚠️ Another device has taken over hosting this room</div>
+      <div class="hint">This screen is now read-only to avoid two hosts issuing conflicting commands. The game itself is unaffected.</div>
+      <button class="btn" id="reclaimHost" style="margin-top:18px;">Take Back Control</button>
+      <button class="btn secondary" id="goHomeFromSuperseded" style="margin-top:10px;">Go Home</button>
+    </div>
+  `;
+  document.getElementById('reclaimHost').onclick = async ()=>{
+    if(!confirm('This will disconnect the other device\'s host controls. Continue?')) return;
+    myHostToken = genHostToken();
+    await mutate(s=>{ s.hostToken = myHostToken; });
+  };
+  document.getElementById('goHomeFromSuperseded').onclick = ()=>{ stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; myHostToken=null; renderHome(); };
+}
 function render(state){
   if(!state) return;
   currentState = state;
   if(myRole==='host'){
+    if(myHostToken && state.hostToken && state.hostToken !== myHostToken) return renderHostSuperseded(state);
     if(state.phase==='lobby') return renderHostLobby(state);
     if(state.phase==='team_naming') return renderHostTeamNaming(state);
     if(state.phase==='board') return renderHostBoard(state);
