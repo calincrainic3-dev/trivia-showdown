@@ -728,7 +728,7 @@ function renderHostBoard(state){
               s.readingInProgress=false; s.buzzerOpen=true;
               const openAt = Date.now();
               s.earlyLockUntil = s.earlyLockUntil || {};
-              Object.keys(s.earlyBuzzers||{}).forEach(name=>{ s.earlyLockUntil[name] = openAt+250; });
+              Object.keys(s.earlyBuzzers||{}).forEach(name=>{ s.earlyLockUntil[name] = openAt+500; });
             }
           });
         });
@@ -796,7 +796,7 @@ function renderHostClue(state){
       s.readingInProgress=false; s.buzzerOpen=true;
       const openAt = Date.now();
       s.earlyLockUntil = s.earlyLockUntil || {};
-      Object.keys(s.earlyBuzzers||{}).forEach(name=>{ s.earlyLockUntil[name] = openAt+250; });
+      Object.keys(s.earlyBuzzers||{}).forEach(name=>{ s.earlyLockUntil[name] = openAt+500; });
     });
   };
   document.getElementById('backBoard').onclick = ()=> mutate(s=>{
@@ -1046,7 +1046,7 @@ function renderPlayerClue(state){
         if(eu && Date.now() < eu) return;
         if(!buzzerEffectivelyOpen(s)){
           s.earlyLockUntil = s.earlyLockUntil || {};
-          s.earlyLockUntil[myName] = Date.now()+250;
+          s.earlyLockUntil[myName] = Date.now()+500;
           s.earlyBuzzers = s.earlyBuzzers || {};
           s.earlyBuzzers[myName] = true;
           s.earlyBuzzBy = myName;
