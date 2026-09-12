@@ -692,11 +692,21 @@ function renderHostLobby(state){
       <div class="hint" style="margin-top:6px;">They tap "Join a Game", enter the code, then pick Team 1, 2, or 3.</div>
       <button class="btn secondary" id="testVoiceBtn" style="margin-top:16px;">🔊 Test the Announcer Voice</button>
       <button class="btn secondary" id="openDisplayBtn" style="margin-top:10px;">📺 Open TV Display (new tab)</button>
-      <div class="row" style="margin-top:20px;max-width:600px;margin-left:auto;margin-right:auto;">
-        ${[1,2,3].map(n=>`<div class="card" style="padding:14px;border-left:5px solid ${TEAM_COLORS[n]};">
-          <b>Team ${n}</b><div class="hint">${computeMembers(state,n).length} joined</div>
-          <div class="hint">${computeMembers(state,n).map(escapeHtml).join(', ') || '—'}</div></div>`).join('')}
+      <div class="row" style="margin-top:20px;max-width:700px;margin-left:auto;margin-right:auto;align-items:stretch;">
+        ${[1,2,3].map(n=>`<div class="card" style="padding:14px;border-left:5px solid ${TEAM_COLORS[n]};text-align:left;">
+          <b>Team ${n}</b><div class="hint" style="margin-bottom:6px;">${computeMembers(state,n).length} joined</div>
+          ${computeMembers(state,n).length ? computeMembers(state,n).map(name=>`
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              <span style="flex:1;font-size:13px;">${escapeHtml(name)}</span>
+              <select class="moveTeamSel" data-player="${escapeAttr(name)}" style="width:auto;padding:4px 6px;font-size:12px;">
+                ${[1,2,3].map(t=>`<option value="${t}" ${t===n?'selected':''}>Team ${t}</option>`).join('')}
+              </select>
+              <button class="btn danger" data-kick="${escapeAttr(name)}" style="padding:4px 8px;font-size:12px;">✕</button>
+            </div>
+          `).join('') : `<div class="hint">—</div>`}
+        </div>`).join('')}
       </div>
+      <div class="hint center" style="margin-top:10px;">Move players between teams or remove someone before starting — no need to have them rejoin.</div>
       <button class="btn" id="startGame" style="margin-top:22px;" ${total===0?'disabled':''}>
         Start Game (${total} player${total===1?'':'s'} · ${actives.length} team${actives.length===1?'':'s'}) →</button>
     </div>
@@ -707,6 +717,19 @@ function renderHostLobby(state){
     url.search = '?display=' + state.code;
     window.open(url.toString(), '_blank');
   };
+  app.querySelectorAll('.moveTeamSel').forEach(sel=>{
+    sel.onchange = ()=> mutate(s=>{
+      const name = sel.dataset.player;
+      if(s.players[name]) s.players[name].team = +sel.value;
+    });
+  });
+  app.querySelectorAll('[data-kick]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const name = btn.dataset.kick;
+      if(!confirm(`Remove ${name} from the game?`)) return;
+      mutate(s=>{ delete s.players[name]; });
+    };
+  });
   document.getElementById('cancelRoom').onclick = ()=>{
     if(!confirm('Cancel this game? Anyone with the room code will no longer be able to join.')) return;
     stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; myHostToken=null; renderHome();
@@ -1278,6 +1301,19 @@ function renderDisplayFinal(state){
   `;
 }
 
+function renderPlayerRemoved(){
+  stopPolling();
+  app.innerHTML = `
+    <div class="topbar"><div class="brand"><div class="dot"></div><h1 class="display">Trivia Showdown</h1></div></div>
+    <div class="card center">
+      <div class="display" style="font-size:22px;color:var(--red);margin-bottom:10px;">You've been removed from this game</div>
+      <div class="hint">The host removed you from the room before it started. If this was a mistake, ask them for the room code and rejoin.</div>
+      <button class="btn" id="backHomeRemoved" style="margin-top:16px;">Go Home</button>
+    </div>
+  `;
+  document.getElementById('backHomeRemoved').onclick = ()=>{ myRole=null; myRoomCode=null; myName=null; renderHome(); };
+}
+
 function renderHostSuperseded(state){
   app.innerHTML = `
     ${topbarRoom(state,'Host — Taken Over')}
@@ -1308,6 +1344,7 @@ function render(state){
     if(state.phase==='final') return renderHostFinal(state);
     if(state.phase==='end') return renderEnd(state, true);
   } else if(myRole==='player'){
+    if(!state.players[myName]) return renderPlayerRemoved();
     if(state.phase==='lobby') return renderPlayerLobby(state);
     if(state.phase==='team_naming') return renderPlayerTeamNaming(state);
     if(state.phase==='board') return renderPlayerBoard(state);
