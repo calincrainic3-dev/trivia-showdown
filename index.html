@@ -240,6 +240,7 @@ function normalizeState(data){
   data.teamNaming = data.teamNaming || {};
   data.lockedOutTeams = data.lockedOutTeams || [];
   data.earlyLockUntil = data.earlyLockUntil || {};
+  data.earlyBuzzers = data.earlyBuzzers || {};
   data.teams = data.teams || {1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}};
   if(!data.final) data.final = {stage:'wager', wagers:{}, answers:{}, graded:{}};
   else{
@@ -355,7 +356,7 @@ function freshState(code){
     code, phase:'lobby', categories:draftBoard, finalQ:{question:draftFinal.question, answer:draftFinal.answer},
     players:{}, teams:{1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}}, activeTeams:[],
     teamNaming:{}, activeClue:null, readingInProgress:false, buzzerOpen:false, buzzedTeam:null, buzzedPlayer:null,
-    lockedOutTeams:[], earlyLockUntil:{}, readEndsAt:null, answerDeadline:null, controllingTeam:null, ddWager:null, ddStage:null, revealAnswer:false,
+    lockedOutTeams:[], earlyLockUntil:{}, earlyBuzzers:{}, readEndsAt:null, answerDeadline:null, controllingTeam:null, ddWager:null, ddStage:null, revealAnswer:false,
     final:{stage:'wager',wagers:{},answers:{},graded:{}}, updatedAt:Date.now()
   };
 }
@@ -722,13 +723,20 @@ function renderHostBoard(state){
       const isDD = clue.dailyDouble;
       if(!isDD){
         speakClue(cat.name, clue.value, clue.text, ()=>{
-          mutate(s=>{ if(s.activeClue && s.activeClue.c===c && s.activeClue.i===i){ s.readingInProgress=false; s.buzzerOpen=true; } });
+          mutate(s=>{
+            if(s.activeClue && s.activeClue.c===c && s.activeClue.i===i){
+              s.readingInProgress=false; s.buzzerOpen=true;
+              const openAt = Date.now();
+              s.earlyLockUntil = s.earlyLockUntil || {};
+              Object.keys(s.earlyBuzzers||{}).forEach(name=>{ s.earlyLockUntil[name] = openAt+250; });
+            }
+          });
         });
       }
       const estMs = isDD ? 0 : estimateSpeechMs(`${cat.name}, for ${clue.value} dollars.`, clue.text);
       mutate(s=>{
         s.activeClue={c,i}; s.revealAnswer=false; s.lockedOutTeams=[]; s.buzzedTeam=null; s.buzzedPlayer=null;
-        s.earlyLockUntil={}; s.answerDeadline=null;
+        s.earlyLockUntil={}; s.earlyBuzzers={}; s.answerDeadline=null;
         if(isDD){ s.phase='daily_double'; s.ddStage='wager'; s.ddWager={team:s.controllingTeam||null, amount:null}; s.readingInProgress=false; s.buzzerOpen=false; s.readEndsAt=null; }
         else { s.phase='clue'; s.readingInProgress=true; s.buzzerOpen=false; s.readEndsAt=Date.now()+estMs; }
       });
@@ -782,7 +790,15 @@ function renderHostClue(state){
   });
   document.getElementById('revealAns').onclick = ()=> mutate(s=>{ s.revealAnswer=true; s.buzzerOpen=false; });
   const skipBtn = document.getElementById('skipReading');
-  if(skipBtn) skipBtn.onclick = ()=>{ stopSpeaking(); mutate(s=>{ s.readingInProgress=false; s.buzzerOpen=true; }); };
+  if(skipBtn) skipBtn.onclick = ()=>{
+    stopSpeaking();
+    mutate(s=>{
+      s.readingInProgress=false; s.buzzerOpen=true;
+      const openAt = Date.now();
+      s.earlyLockUntil = s.earlyLockUntil || {};
+      Object.keys(s.earlyBuzzers||{}).forEach(name=>{ s.earlyLockUntil[name] = openAt+250; });
+    });
+  };
   document.getElementById('backBoard').onclick = ()=> mutate(s=>{
     stopSpeaking();
     const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true;
@@ -979,7 +995,7 @@ function computeBuzzState(state, myTeam, myName){
   const effOpen = buzzerEffectivelyOpen(state);
   const isSteal = state.lockedOutTeams.length > 0;
   const earlyUntil = state.earlyLockUntil && state.earlyLockUntil[myName];
-  if(earlyUntil && now < earlyUntil) return {cls:'state-red', label:'TOO EARLY!', disabled:true, sub:"A quick penalty for jumping the gun — you can try again in a moment. Your teammates can still buzz."};
+  if(earlyUntil && now < earlyUntil) return {cls:'state-red', label:'TOO EARLY!', disabled:true, sub:"You jumped before the reading finished — you'll be held back for a beat once the buzzer truly opens. Your teammates can still buzz."};
   if(state.lockedOutTeams.includes(myTeam)) return {cls:'state-locked', label: !effOpen ? 'LISTEN…' : 'LOCKED OUT', disabled:true, sub:''};
   if(state.buzzedTeam){
     if(state.buzzedTeam === myTeam){
@@ -1031,6 +1047,8 @@ function renderPlayerClue(state){
         if(!buzzerEffectivelyOpen(s)){
           s.earlyLockUntil = s.earlyLockUntil || {};
           s.earlyLockUntil[myName] = Date.now()+250;
+          s.earlyBuzzers = s.earlyBuzzers || {};
+          s.earlyBuzzers[myName] = true;
           s.earlyBuzzBy = myName;
           return;
         }
