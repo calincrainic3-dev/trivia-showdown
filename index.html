@@ -123,7 +123,7 @@
 const VALUES = [200,400,600,800,1000];
 const CATS_DEFAULT = 5;
 const CLUES_PER_CAT = 5;
-const POLL_MS = 1200;
+const POLL_MS = 400;
 const TEAM_SIZE_MAX = 5;
 const TEAM_COLORS = {1:'var(--t1)',2:'var(--t2)',3:'var(--t3)'};
 const ADJECTIVES = ['Ferocious','Sneaky','Mighty','Rowdy','Electric','Sly','Turbo','Cosmic','Wobbly','Fearless','Grumpy','Dazzling','Rebel','Golden','Feral','Rambunctious','Sizzling','Nocturnal'];
@@ -337,9 +337,7 @@ function playThinkTicks(durationSec){
   }, 1000);
 }
 function buzzerEffectivelyOpen(state){
-  if(state.buzzerOpen) return true;
-  if(state.readingInProgress && state.readEndsAt) return Date.now() >= state.readEndsAt;
-  return false;
+  return !!state.buzzerOpen;
 }
 
 // ---------- board defaults ----------
@@ -366,6 +364,10 @@ function freshState(code){
 function computeMembers(state,n){ return Object.entries(state.players).filter(([,p])=>p.team===n).map(([name])=>name); }
 function activeTeamNumbers(state){ const set=new Set(Object.values(state.players).map(p=>p.team)); return [1,2,3].filter(n=>set.has(n)); }
 function teamDisplayName(state,n){ return (state.teams[n] && state.teams[n].name) || `Team ${n}`; }
+function findExistingPlayerKey(state, name){
+  const lower = name.trim().toLowerCase();
+  return Object.keys(state.players).find(k => k.toLowerCase() === lower) || null;
+}
 
 // ---------- polling ----------
 function startPolling(){
@@ -537,9 +539,10 @@ function renderJoinScreen(){
     if(!code || !name){ err.textContent='Enter both a room code and a name.'; return; }
     const state = await loadRoom(code);
     if(!state){ err.textContent='No game found with that code. Double-check with the host.'; return; }
-    if(state.players[name]){
-      // Same name already in this room — treat as a reconnect rather than blocking them out.
-      myRole='player'; myName=name; myRoomCode=code;
+    const existingKey = findExistingPlayerKey(state, name);
+    if(existingKey){
+      // Same name already in this room (case-insensitive) — treat as a reconnect rather than blocking them out.
+      myRole='player'; myName=existingKey; myRoomCode=code;
       startPolling();
       render(state);
       return;
@@ -573,7 +576,7 @@ function renderTeamPick(code, name, state){
       const err = document.getElementById('pickErr');
       const fresh = await loadRoom(code);
       if(!fresh){ err.textContent='Room disappeared — ask the host for a fresh code.'; return; }
-      if(fresh.players[name]){ err.textContent='That name was just taken — go back and try another.'; return; }
+      if(findExistingPlayerKey(fresh, name)){ err.textContent='That name was just taken — go back and try another.'; return; }
       if(computeMembers(fresh,n).length >= TEAM_SIZE_MAX){ err.textContent='That team just filled up — pick another.'; return; }
       await mutate(s=>{ s.players[name] = { team:n }; });
       startPolling();
@@ -706,20 +709,6 @@ function renderHostClue(state){
   const cat = state.categories[state.activeClue.c];
   const isSteal = state.lockedOutTeams.length > 0;
   const effOpen = buzzerEffectivelyOpen(state);
-
-  if(state.buzzedTeam && state.answerDeadline && Date.now() > state.answerDeadline){
-    mutate(s=>{
-      if(s.buzzedTeam && s.answerDeadline && Date.now() > s.answerDeadline){
-        const cl=s.categories[s.activeClue.c].clues[s.activeClue.i];
-        s.teams[s.buzzedTeam].score -= cl.value; s.lockedOutTeams.push(s.buzzedTeam);
-        s.buzzedTeam=null; s.buzzedPlayer=null; s.answerDeadline=null;
-        const remaining = s.activeTeams.filter(n=>!s.lockedOutTeams.includes(n));
-        s.buzzerOpen = remaining.length > 0;
-      }
-    });
-    return;
-  }
-
   const secsLeft = state.buzzedTeam && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
   app.innerHTML = `
     ${topbarRoom(state,'Host')}
@@ -731,7 +720,7 @@ function renderHostClue(state){
     </div>
     <div class="reading-status">
       ${!effOpen ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
-        : (state.buzzedTeam ? `🟢 ${escapeHtml(state.buzzedPlayer)} from ${escapeHtml(teamDisplayName(state,state.buzzedTeam))} buzzed in first!${secsLeft!==null?` (${secsLeft}s to answer)`:''}`
+        : (state.buzzedTeam ? `🟢 ${escapeHtml(state.buzzedPlayer)} from ${escapeHtml(teamDisplayName(state,state.buzzedTeam))} buzzed in first!${secsLeft!==null?(secsLeft>0?` (${secsLeft}s to answer)`:` — time's up, please judge below`):''}`
         : (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…'))}
     </div>
     ${state.lockedOutTeams.length ? `<div class="hint center" style="margin-top:6px;">Locked out on this clue: ${state.lockedOutTeams.map(n=>teamDisplayName(state,n)).join(', ')}</div>` : ''}
@@ -784,16 +773,6 @@ function renderHostDailyDouble(state){
       });
     });
   }
-  if(state.ddStage==='reveal' && state.answerDeadline && Date.now() > state.answerDeadline){
-    mutate(s=>{
-      if(s.ddStage==='reveal' && s.answerDeadline && Date.now() > s.answerDeadline){
-        s.teams[s.ddWager.team].score -= s.ddWager.amount;
-        const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true;
-        s.phase='board'; s.activeClue=null; s.ddWager=null; s.ddStage=null; s.revealAnswer=false; s.answerDeadline=null;
-      }
-    });
-    return;
-  }
   const secsLeft = state.ddStage==='reveal' && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
   const isTrueDD = state.ddWager.trueDD;
 
@@ -808,7 +787,7 @@ function renderHostDailyDouble(state){
           <div style="margin-top:10px;"><button class="btn secondary" id="setWagerer">Confirm Team</button></div>` : ''}
       ` : `
         <div class="clue-text">${escapeHtml(clue.text)}</div>
-        <div class="hint" style="margin-top:8px;">${escapeHtml(teamDisplayName(state,wagerTeam))} wagered ${fmt(state.ddWager.amount)}${secsLeft!==null?` · ${secsLeft}s to answer`:''}</div>
+        <div class="hint" style="margin-top:8px;">${escapeHtml(teamDisplayName(state,wagerTeam))} wagered ${fmt(state.ddWager.amount)}${secsLeft!==null?(secsLeft>0?` · ${secsLeft}s to answer`:' · time\'s up, please judge below'):''}</div>
         ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
       `}
     </div>
@@ -964,8 +943,8 @@ function computeBuzzState(state, myTeam, myName){
   const now = Date.now();
   const effOpen = buzzerEffectivelyOpen(state);
   const isSteal = state.lockedOutTeams.length > 0;
-  const earlyUntil = state.earlyLockUntil && state.earlyLockUntil[myTeam];
-  if(earlyUntil && now < earlyUntil) return {cls:'state-red', label:'TOO EARLY!', disabled:true, sub:'A quick penalty for jumping the gun — try again in a moment.'};
+  const earlyUntil = state.earlyLockUntil && state.earlyLockUntil[myName];
+  if(earlyUntil && now < earlyUntil) return {cls:'state-red', label:'TOO EARLY!', disabled:true, sub:"A quick penalty for jumping the gun — you can try again in a moment. Your teammates can still buzz."};
   if(state.lockedOutTeams.includes(myTeam)) return {cls:'state-locked', label: !effOpen ? 'LISTEN…' : 'LOCKED OUT', disabled:true, sub:''};
   if(state.buzzedTeam){
     if(state.buzzedTeam === myTeam){
@@ -1012,11 +991,11 @@ function renderPlayerClue(state){
       await mutate(s=>{
         const team = s.players[myName].team;
         if(s.lockedOutTeams.includes(team)) return;
-        const eu = s.earlyLockUntil && s.earlyLockUntil[team];
+        const eu = s.earlyLockUntil && s.earlyLockUntil[myName];
         if(eu && Date.now() < eu) return;
         if(!buzzerEffectivelyOpen(s)){
           s.earlyLockUntil = s.earlyLockUntil || {};
-          s.earlyLockUntil[team] = Date.now()+250;
+          s.earlyLockUntil[myName] = Date.now()+250;
           s.earlyBuzzBy = myName;
           return;
         }
@@ -1043,8 +1022,9 @@ function renderPlayerDailyDouble(state){
       <div class="value">${escapeHtml(cat.name)}</div>
       ${state.ddStage==='wager' ? `
         ${isWagerer ? `<div class="field" style="max-width:220px;margin:14px auto 0;"><label>Your Team's Wager (${fmt(minWager)}–${fmt(maxWager)})</label><input type="number" id="wagerAmt" min="${minWager}" max="${maxWager}" value="${minWager}"></div>
+          <div class="hint" style="margin-bottom:8px;">Minimum $5. Maximum is your team's score — or $1,000 if your score is lower than that.</div>
           <div class="row" style="max-width:320px;margin:0 auto;">
-            <button class="btn secondary" id="betItAll" type="button">Bet It All</button>
+            <button class="btn secondary" id="betItAll" type="button">True Daily Double (Bet It All)</button>
             <button class="btn" id="submitWager">Lock In Wager</button>
           </div>`
           : `<div class="hint" style="margin-top:14px;">${state.ddWager && state.ddWager.team ? `${escapeHtml(teamDisplayName(state,state.ddWager.team))} is wagering…` : 'Host is choosing who wagers…'}</div>`}
@@ -1059,7 +1039,7 @@ function renderPlayerDailyDouble(state){
     ${teamScoreboardHtml(state)}
   `;
   const betItAll = document.getElementById('betItAll');
-  if(betItAll) betItAll.onclick = ()=>{ document.getElementById('wagerAmt').value = maxWager; };
+  if(betItAll) betItAll.onclick = ()=>{ document.getElementById('wagerAmt').value = Math.max(minWager, teamScore); };
   const submitWager = document.getElementById('submitWager');
   if(submitWager) submitWager.onclick = ()=>{
     const amt = Math.max(minWager, Math.min(maxWager, +document.getElementById('wagerAmt').value || minWager));
