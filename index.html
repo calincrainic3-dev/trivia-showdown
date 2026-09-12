@@ -124,7 +124,7 @@ const VALUES = [200,400,600,800,1000];
 const CATS_DEFAULT = 5;
 const CLUES_PER_CAT = 5;
 const POLL_MS = 400;
-const TEAM_SIZE_MAX = 5;
+const TEAM_SIZE_MAX = 7;
 const TEAM_COLORS = {1:'var(--t1)',2:'var(--t2)',3:'var(--t3)'};
 const ADJECTIVES = ['Ferocious','Sneaky','Mighty','Rowdy','Electric','Sly','Turbo','Cosmic','Wobbly','Fearless','Grumpy','Dazzling','Rebel','Golden','Feral','Rambunctious','Sizzling','Nocturnal'];
 const ANIMALS = ['Flamingos','Otters','Badgers','Narwhals','Wolves','Falcons','Raccoons','Platypuses','Hedgehogs','Piranhas','Yaks','Meerkats','Wombats','Toucans','Jackrabbits','Porcupines','Iguanas'];
@@ -539,7 +539,7 @@ function renderHostSetup(){
       <button class="btn secondary" id="backChoice">← Back</button></div>
     <div class="card">
       <div class="hint" style="margin-bottom:16px;">Review or edit the 5×5 board below. Toggle <b>Daily Double</b> on any one clue per category.
-      Up to 3 teams of up to 5 players each will play — players pick a team when they join.</div>
+      Up to 3 teams of up to 7 players each will play — players pick a team when they join.</div>
       <div id="catEditors"></div>
       <div class="field" style="margin-top:8px;"><label>Final Round Clue</label>
         <textarea id="finalQ" placeholder="Final clue text, read after the board is cleared...">${escapeHtml(draftFinal.question)}</textarea></div>
