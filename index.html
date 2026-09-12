@@ -238,6 +238,14 @@ function normalizeState(data){
   data.players = data.players || {};
   data.activeTeams = data.activeTeams || [];
   data.teamNaming = data.teamNaming || {};
+  Object.keys(data.teamNaming).forEach(n=>{
+    const t = data.teamNaming[n];
+    if(t){
+      t.suggestions = t.suggestions || {};
+      t.votes = t.votes || {};
+      t.candidates = t.candidates || [];
+    }
+  });
   data.lockedOutTeams = data.lockedOutTeams || [];
   data.earlyLockUntil = data.earlyLockUntil || {};
   data.earlyBuzzers = data.earlyBuzzers || {};
