@@ -994,8 +994,17 @@ function computeBuzzState(state, myTeam, myName){
   const now = Date.now();
   const effOpen = buzzerEffectivelyOpen(state);
   const isSteal = state.lockedOutTeams.length > 0;
+  const jumpedEarly = !!(state.earlyBuzzers && state.earlyBuzzers[myName]);
   const earlyUntil = state.earlyLockUntil && state.earlyLockUntil[myName];
-  if(earlyUntil && now < earlyUntil) return {cls:'state-red', label:'TOO EARLY!', disabled:true, sub:"You jumped before the reading finished — you'll be held back for a beat once the buzzer truly opens. Your teammates can still buzz."};
+  const stillServingPenalty = earlyUntil && now < earlyUntil;
+  if(jumpedEarly && (!effOpen || stillServingPenalty)){
+    return {
+      cls:'state-red',
+      label: effOpen ? 'TOO EARLY — 0.5s DELAY' : 'TOO EARLY!',
+      disabled:true,
+      sub: effOpen ? 'Serving your penalty for jumping the gun — one moment…' : "You jumped before the reading finished — you'll serve a 0.5s delay the instant the buzzer opens. Your teammates can still buzz."
+    };
+  }
   if(state.lockedOutTeams.includes(myTeam)) return {cls:'state-locked', label: !effOpen ? 'LISTEN…' : 'LOCKED OUT', disabled:true, sub:''};
   if(state.buzzedTeam){
     if(state.buzzedTeam === myTeam){
