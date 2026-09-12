@@ -743,24 +743,26 @@ function renderHostClue(state){
   const isSteal = state.lockedOutTeams.length > 0;
   const effOpen = buzzerEffectivelyOpen(state);
   const secsLeft = state.buzzedTeam && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
+  const noTeamsLeft = state.activeTeams.length>0 && state.activeTeams.every(n=>state.lockedOutTeams.includes(n));
   app.innerHTML = `
     ${topbarRoom(state,'Host')}
     <div class="spotlight">
       <div class="cat-label">${escapeHtml(cat.name)}</div>
       <div class="value">${fmt(clue.value)}</div>
       <div class="clue-text">${escapeHtml(clue.text)}</div>
-      ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
+      <div class="answer-text">Correct response: ${escapeHtml(clue.answer)}${state.revealAnswer ? ' (shown to players)' : ' — private, for your eyes only'}</div>
     </div>
     <div class="reading-status">
-      ${!effOpen ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
+      ${state.readingInProgress ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
         : (state.buzzedTeam ? `🟢 ${escapeHtml(state.buzzedPlayer)} from ${escapeHtml(teamDisplayName(state,state.buzzedTeam))} buzzed in first!${secsLeft!==null?(secsLeft>0?` (${secsLeft}s to answer)`:` — time's up, please judge below`):''}`
-        : (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…'))}
+        : (state.buzzerOpen ? (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…')
+        : (noTeamsLeft ? '⚪ No teams remaining — reveal the response and move on' : 'Buzzers closed')))}
     </div>
     ${state.lockedOutTeams.length ? `<div class="hint center" style="margin-top:6px;">Locked out on this clue: ${state.lockedOutTeams.map(n=>teamDisplayName(state,n)).join(', ')}</div>` : ''}
     <div class="row" style="margin-top:16px;">
       <button class="btn teal" id="markCorrect" ${!state.buzzedTeam?'disabled':''}>✔ Correct</button>
       <button class="btn danger" id="markWrong" ${!state.buzzedTeam?'disabled':''}>✘ Wrong</button>
-      <button class="btn secondary" id="revealAns">Reveal Response</button>
+      <button class="btn secondary" id="revealAns">📣 Reveal to Players</button>
       ${!effOpen ? `<button class="btn secondary" id="skipReading">Skip Reading / Open Buzzers</button>` : ''}
     </div>
     <div class="judge-hint">💡 Remember: real Jeopardy doesn't require exact wording or strict question-form phrasing — judge whether the answer is substantively correct.</div>
@@ -821,13 +823,13 @@ function renderHostDailyDouble(state){
       ` : `
         <div class="clue-text">${escapeHtml(clue.text)}</div>
         <div class="hint" style="margin-top:8px;">${escapeHtml(teamDisplayName(state,wagerTeam))} wagered ${fmt(state.ddWager.amount)}${secsLeft!==null?(secsLeft>0?` · ${secsLeft}s to answer`:' · time\'s up, please judge below'):''}</div>
-        ${state.revealAnswer ? `<div class="answer-text">Correct response: ${escapeHtml(clue.answer)}</div>` : ''}
+        <div class="answer-text">Correct response: ${escapeHtml(clue.answer)}${state.revealAnswer ? ' (shown to players)' : ' — private, for your eyes only'}</div>
       `}
     </div>
     ${state.ddStage==='reveal' ? `<div class="row" style="margin-top:16px;">
         <button class="btn teal" id="ddCorrect">✔ Correct</button>
         <button class="btn danger" id="ddWrong">✘ Wrong</button>
-        <button class="btn secondary" id="ddReveal">Reveal Response</button></div>
+        <button class="btn secondary" id="ddReveal">📣 Reveal to Players</button></div>
       <div class="judge-hint">💡 Doesn't need to be word-for-word — judge on substance, same as the real show.</div>` : ''}
     <div class="center" style="margin-top:14px;"><button class="btn secondary" id="backBoard">Back to Board</button></div>
     ${teamScoreboardHtml(state)}
@@ -854,7 +856,7 @@ function renderHostFinal(state){
       <div class="hint" style="margin-bottom:10px;">Final clue (hidden from players until you reveal it):</div>
       <div class="spotlight" style="margin-top:0;">
         <div class="clue-text">${f.stage!=='wager' ? escapeHtml(state.finalQ.question) : '🔒 Hidden until wagers are in'}</div>
-        ${f.stage==='graded' ? `<div class="answer-text">Correct response: ${escapeHtml(state.finalQ.answer)}</div>` : ''}
+        ${f.stage==='grading' ? `<div class="answer-text">Correct response: ${escapeHtml(state.finalQ.answer)}</div>` : ''}
       </div>
       ${f.stage==='wager' ? `<div class="hint" style="margin:14px 0;">Wagers in: ${wagersIn.length}/${actives.length}</div>
         <button class="btn block" id="revealFinal" ${wagersIn.length<actives.length?'disabled':''}>Reveal Clue to Players →</button>` : ''}
@@ -1156,8 +1158,8 @@ function renderDisplayClue(state){
   const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
   const cat = state.categories[state.activeClue.c];
   const isSteal = state.lockedOutTeams.length > 0;
-  const effOpen = buzzerEffectivelyOpen(state);
   const secsLeft = state.buzzedTeam && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
+  const noTeamsLeft = state.activeTeams.length>0 && state.activeTeams.every(n=>state.lockedOutTeams.includes(n));
   app.innerHTML = `
     ${topbarRoom(state,'Display')}
     <div class="spotlight">
@@ -1166,9 +1168,10 @@ function renderDisplayClue(state){
       <div class="clue-text">${escapeHtml(clue.text)}</div>
     </div>
     <div class="reading-status">
-      ${!effOpen ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
+      ${state.readingInProgress ? `<div class="pulse"></div> Reading clue aloud — buzzers are locked…`
         : (state.buzzedTeam ? `🟢 ${escapeHtml(state.buzzedPlayer)} from ${escapeHtml(teamDisplayName(state,state.buzzedTeam))} buzzed in first!${secsLeft!==null?(secsLeft>0?` (${secsLeft}s to answer)`:` — judging…`):''}`
-        : (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…'))}
+        : (state.buzzerOpen ? (isSteal ? '🟡 Steal window open — remaining teams may ring in' : '🟢 Buzzers open — waiting for a team to ring in…')
+        : (noTeamsLeft ? '⚪ Moving on to the next clue…' : 'Buzzers closed')))}
     </div>
     ${teamScoreboardHtml(state)}
   `;
