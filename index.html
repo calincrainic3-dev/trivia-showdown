@@ -438,10 +438,9 @@ function renderHome(){
       A team-based Jeopardy-style party game. One host screen runs the board and reads clues aloud;
       everyone else joins from their phone with a room code, picks a team, and buzzes in.
     </p>
-    <div class="home-grid" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="home-grid">
       <div class="choice-card" id="goHost"><div class="icon">🎙️</div><h3 class="display">Host a Game</h3><div class="hint">Build a custom board or pick a ready-made pack, then run it privately from this screen. Shows the correct answer — keep this screen to yourself.</div></div>
       <div class="choice-card" id="goJoin"><div class="icon">📱</div><h3 class="display">Join a Game</h3><div class="hint">Enter the room code, pick a team, and get ready to buzz.</div></div>
-      <div class="choice-card" id="goDisplay"><div class="icon">📺</div><h3 class="display">TV Display</h3><div class="hint">A safe-to-project view for a shared screen or TV — clues and scores, never the answer.</div></div>
     </div>
     <footer class="smallnote">
       Players don't need to share Wi-Fi — anyone with this page's link can join with the room code from anywhere.
@@ -452,7 +451,6 @@ function renderHome(){
   `;
   document.getElementById('goHost').onclick = renderBoardChoice;
   document.getElementById('goJoin').onclick = renderJoinScreen;
-  document.getElementById('goDisplay').onclick = renderDisplayJoin;
   document.getElementById('resumeHostLink').onclick = (e)=>{ e.preventDefault(); renderResumeHost(); };
 }
 
@@ -1308,10 +1306,12 @@ function renderPlayerRemoved(){
     <div class="card center">
       <div class="display" style="font-size:22px;color:var(--red);margin-bottom:10px;">You've been removed from this game</div>
       <div class="hint">The host removed you from the room before it started. If this was a mistake, ask them for the room code and rejoin.</div>
-      <button class="btn" id="backHomeRemoved" style="margin-top:16px;">Go Home</button>
+      <div class="hint" style="margin-top:10px;">Returning to the home screen…</div>
+      <button class="btn" id="backHomeRemoved" style="margin-top:16px;">Go Home Now</button>
     </div>
   `;
-  document.getElementById('backHomeRemoved').onclick = ()=>{ myRole=null; myRoomCode=null; myName=null; renderHome(); };
+  document.getElementById('backHomeRemoved').onclick = ()=> location.reload();
+  setTimeout(()=> location.reload(), 2000);
 }
 
 function renderHostSuperseded(state){
