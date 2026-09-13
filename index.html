@@ -1411,25 +1411,34 @@ function renderPlayerFinal(state){
     }
   } else if(f.stage==='wager'){
     const captainBanner = isCaptain ? `<div class="card naming-card" style="text-align:left;margin-bottom:14px;"><b>🎖️ You're the Captain!</b><div class="hint" style="margin-top:6px;">You'll see everyone's suggested wager and lock in the official one for your team. In a moment, you'll also be the one writing the team's final answer — everyone else can chat with you to help.</div></div>` : '';
+    const wagerChatBlock = `
+      <div class="card" style="margin-top:16px;text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
+      <div class="row" style="margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">
+        <input type="text" id="chatInput" placeholder="Discuss your wager with your team…">
+        <button class="btn" id="sendChatBtn" style="flex:none;">Send</button>
+      </div>`;
     if(!mySuggested){
       body = `${captainBanner}
         <div class="field" style="max-width:220px;margin:0 auto;"><label>Suggest a Wager (max ${fmt(maxWager)})</label><input type="number" id="fSuggest" min="0" max="${maxWager}" value="0"></div>
-        <button class="btn" id="submitSuggest" style="margin-top:10px;">Send Suggestion</button>`;
+        <button class="btn" id="submitSuggest" style="margin-top:10px;">Send Suggestion</button>
+        ${wagerChatBlock}`;
     } else if(isCaptain){
       if(!allSuggested){
         body = `${captainBanner}<div class="hint">Waiting for teammates to submit their suggested wagers (${Object.keys(teamSuggestions).length}/${members.length})…</div>
-          ${Object.entries(teamSuggestions).map(([n,a])=>`<div class="hint">${escapeHtml(n)} suggested ${fmt(a)}</div>`).join('')}`;
+          ${Object.entries(teamSuggestions).map(([n,a])=>`<div class="hint">${escapeHtml(n)} suggested ${fmt(a)}</div>`).join('')}
+          ${wagerChatBlock}`;
       } else if(!wagerLocked){
         body = `${captainBanner}
           <div class="display" style="font-size:16px;color:var(--gold);margin:10px 0 6px;">Your Team's Suggestions</div>
           ${Object.entries(teamSuggestions).map(([n,a])=>`<div class="hint">${escapeHtml(n)} suggested ${fmt(a)}</div>`).join('')}
           <div class="field" style="max-width:220px;margin:14px auto 0;"><label>Official Wager (max ${fmt(maxWager)})</label><input type="number" id="fWager" min="0" max="${maxWager}" value="0"></div>
-          <button class="btn" id="submitFWager" style="margin-top:10px;">Lock In Team's Wager</button>`;
+          <button class="btn" id="submitFWager" style="margin-top:10px;">Lock In Team's Wager</button>
+          ${wagerChatBlock}`;
       } else {
-        body = `${captainBanner}<div class="hint">Wager locked in at ${fmt(f.wagers[myTeam])} — waiting on other teams' captains…</div>`;
+        body = `${captainBanner}<div class="hint">Wager locked in at ${fmt(f.wagers[myTeam])} — waiting on other teams' captains…</div>${wagerChatBlock}`;
       }
     } else {
-      body = `<div class="hint">Suggestion sent (${fmt(teamSuggestions[myName])}) — waiting for your captain, ${escapeHtml(f.captains[myTeam])}, to lock in the official wager.</div>`;
+      body = `<div class="hint">Suggestion sent (${fmt(teamSuggestions[myName])}) — waiting for your captain, ${escapeHtml(f.captains[myTeam])}, to lock in the official wager.</div>${wagerChatBlock}`;
     }
   } else if(f.stage==='reading'){
     body = `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div><div class="reading-status"><div class="pulse"></div> Reading clue aloud…</div>`;
