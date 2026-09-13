@@ -131,6 +131,7 @@ const ANIMALS = ['Flamingos','Otters','Badgers','Narwhals','Wolves','Falcons','R
 
 let myRole = null, myName = null, myRoomCode = null, pollTimer = null, lastStamp = null;
 let myHostToken = null;
+let pendingCarryover = null;
 function genHostToken(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 let draftBoard = null, draftFinal = {question:'', answer:''};
 let localBuzzLock = false;
@@ -278,17 +279,46 @@ async function saveRoom(code, state){
   return state;
 }
 async function patchPath(subPath, valueObj){
+  return patchPathForCode(myRoomCode, subPath, valueObj);
+}
+async function patchPathForCode(code, subPath, valueObj){
   try{
-    await fetch(`${FIREBASE_DB_URL}/rooms/${myRoomCode}/${subPath}.json`, {
+    await fetch(`${FIREBASE_DB_URL}/rooms/${code}/${subPath}.json`, {
       method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(valueObj)
     });
   }catch(e){ console.error('patch failed', e); }
+}
+async function markSuperseded(oldCode, newCode){
+  try{
+    await fetch(`${FIREBASE_DB_URL}/rooms/${oldCode}.json`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({supersededBy:newCode})
+    });
+  }catch(e){ console.error('mark superseded failed', e); }
 }
 // Safely record one person's submission (merge-only, never clobbers a teammate's simultaneous write),
 // then separately re-check with the latest data whether everyone's in and something should advance.
 async function submitAndCheck(subPath, patchObj, checkFn){
   await patchPath(subPath, patchObj);
   await mutate(checkFn);
+}
+async function saveCustomBoard(title, categories, finalQ){
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  try{
+    await fetch(`${FIREBASE_DB_URL}/savedBoards/${id}.json`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({title, categories, finalQ, savedAt: Date.now()})
+    });
+  }catch(e){ console.error('save board failed', e); }
+  return id;
+}
+async function loadSavedBoards(){
+  try{
+    const res = await fetch(`${FIREBASE_DB_URL}/savedBoards.json`);
+    if(!res.ok) return [];
+    const data = await res.json();
+    if(!data) return [];
+    return Object.entries(data).map(([id,b])=>({id, ...b})).sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
+  }catch(e){ return []; }
 }
 function genCode(){ const chars='ABCDEFGHJKLMNPQRSTUVWXYZ'; let c=''; for(let i=0;i<4;i++) c+=chars[Math.floor(Math.random()*chars.length)]; return c; }
 function fmt(n){ const neg=n<0; return (neg?'-':'')+'$'+Math.abs(n).toLocaleString(); }
@@ -418,6 +448,13 @@ function startPolling(){
   pollTimer = setInterval(async ()=>{
     if(!myRoomCode) return;
     const state = await loadRoom(myRoomCode);
+    if(state && state.supersededBy && state.supersededBy !== myRoomCode){
+      const newCode = state.supersededBy;
+      myRoomCode = newCode;
+      const newState = await loadRoom(newCode);
+      if(newState){ lastStamp = newState.updatedAt; render(newState); }
+      return;
+    }
     if(state && state.updatedAt !== lastStamp){ lastStamp = state.updatedAt; render(state); }
   }, POLL_MS);
 }
@@ -573,7 +610,7 @@ function renderDisplayJoin(){
   };
 }
 
-function renderBoardChoice(){
+async function renderBoardChoice(){
   app.innerHTML = `
     <div class="topbar"><div class="brand"><div class="dot"></div><h1 class="display">Choose Your Board</h1></div>
       <button class="btn secondary" id="backHome">← Back</button></div>
@@ -583,6 +620,7 @@ function renderBoardChoice(){
       ${STANDARD_PACKS.map(p=>`
         <div class="pack-card" data-pack="${p.id}"><h4>📦 ${escapeHtml(p.title)}</h4><div class="hint">${escapeHtml(p.blurb)}</div></div>
       `).join('')}
+      <div id="savedBoardsWrap"><div class="hint center">Loading your saved boards…</div></div>
     </div>
   `;
   document.getElementById('backHome').onclick = renderHome;
@@ -592,6 +630,20 @@ function renderBoardChoice(){
       const pack = STANDARD_PACKS.find(p=>p.id===el.dataset.pack);
       draftBoard = deepClone(pack.categories);
       draftFinal = deepClone(pack.finalQ);
+      renderHostSetup();
+    };
+  });
+  const saved = await loadSavedBoards();
+  const wrap = document.getElementById('savedBoardsWrap');
+  if(!wrap) return; // user navigated away before this resolved
+  wrap.innerHTML = saved.length ? saved.map(b=>`
+    <div class="pack-card" data-saved="${escapeAttr(b.id)}"><h4>💾 ${escapeHtml(b.title)}</h4><div class="hint">Your saved board — ${b.categories.length} categories</div></div>
+  `).join('') : '';
+  wrap.querySelectorAll('[data-saved]').forEach(el=>{
+    el.onclick = ()=>{
+      const b = saved.find(x=>x.id===el.dataset.saved);
+      draftBoard = deepClone(b.categories);
+      draftFinal = deepClone(b.finalQ);
       renderHostSetup();
     };
   });
@@ -610,6 +662,7 @@ function renderHostSetup(){
       <div class="field"><label>Final Round Correct Response</label>
         <input type="text" id="finalA" value="${escapeAttr(draftFinal.answer)}" placeholder="The correct response"></div>
       <button class="btn block" id="createRoom" style="margin-top:10px;">Create Room →</button>
+      <button class="btn secondary block" id="saveBoard" style="margin-top:10px;">💾 Save This Board For Later</button>
     </div>
   `;
   document.getElementById('backChoice').onclick = renderBoardChoice;
@@ -645,10 +698,26 @@ function renderHostSetup(){
     myHostToken = genHostToken();
     const state = freshState(code);
     state.hostToken = myHostToken;
+    if(pendingCarryover){
+      state.players = pendingCarryover.players;
+      [1,2,3].forEach(n=>{ if(pendingCarryover.teamNames[n]) state.teams[n].name = pendingCarryover.teamNames[n]; });
+    }
     await saveRoom(code, state);
+    if(pendingCarryover && pendingCarryover.oldCode){ await markSuperseded(pendingCarryover.oldCode, code); }
+    pendingCarryover = null;
     lastStamp = state.updatedAt;
     startPolling();
     render(state);
+  };
+  document.getElementById('saveBoard').onclick = async ()=>{
+    const finalQ = document.getElementById('finalQ').value.trim();
+    const finalA = document.getElementById('finalA').value.trim();
+    const emptyClues = draftBoard.some(c=>!c.name.trim() || c.clues.some(cl=>!cl.text.trim()||!cl.answer.trim()));
+    if(emptyClues || !finalQ || !finalA){ alert('Fill in every category, clue, and the final round before saving.'); return; }
+    const title = prompt('Name this board so you can find it later:', "Shayla's Birthday Board");
+    if(!title) return;
+    await saveCustomBoard(title.trim(), draftBoard, {question:finalQ, answer:finalA});
+    alert('Saved! You will see it next time you choose a board.');
   };
 }
 
@@ -1080,10 +1149,24 @@ function renderEnd(state, isHost){
           <span><b>${idx+1}. ${escapeHtml(teamDisplayName(state,n))}</b><br><span class="hint">${computeMembers(state,n).map(escapeHtml).join(', ')}</span></span>
           <span class="pscore mono" style="color:${score<0?'var(--red)':'var(--gold)'};font-size:18px;font-weight:700;">${fmt(score)}</span></div>`).join('')}
       </div>
-      ${isHost ? `<button class="btn" id="newGame" style="margin-top:22px;">Start a New Game</button>` : `<div class="hint" style="margin-top:20px;">Thanks for playing!</div>`}
+      ${isHost ? `
+        <button class="btn" id="newGame" style="margin-top:22px;">Start New Game (Same Teams)</button>
+        <button class="btn secondary" id="newGameFresh" style="margin-top:10px;">Start New Game (Fresh Lobby)</button>
+      ` : `<div class="hint" style="margin-top:20px;">Thanks for playing!</div>`}
     </div>
   `;
-  if(isHost) document.getElementById('newGame').onclick = ()=>{ stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; myHostToken=null; renderHome(); };
+  if(isHost){
+    document.getElementById('newGame').onclick = ()=>{
+      pendingCarryover = {
+        players: JSON.parse(JSON.stringify(state.players)),
+        teamNames: {1:state.teams[1].name, 2:state.teams[2].name, 3:state.teams[3].name},
+        oldCode: myRoomCode
+      };
+      stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; myHostToken=null;
+      renderBoardChoice();
+    };
+    document.getElementById('newGameFresh').onclick = ()=>{ stopPolling(); stopSpeaking(); myRole=null; myRoomCode=null; myHostToken=null; renderHome(); };
+  }
 }
 
 // =================================================================
@@ -1327,22 +1410,23 @@ function renderPlayerFinal(state){
         <div style="max-width:320px;margin:0 auto;">${cv.candidates.map(c=>`<button class="vote-btn" data-cap="${escapeAttr(c)}">${escapeHtml(c)}</button>`).join('')}</div>`;
     }
   } else if(f.stage==='wager'){
+    const captainBanner = isCaptain ? `<div class="card naming-card" style="text-align:left;margin-bottom:14px;"><b>🎖️ You're the Captain!</b><div class="hint" style="margin-top:6px;">You'll see everyone's suggested wager and lock in the official one for your team. In a moment, you'll also be the one writing the team's final answer — everyone else can chat with you to help.</div></div>` : '';
     if(!mySuggested){
-      body = `
+      body = `${captainBanner}
         <div class="field" style="max-width:220px;margin:0 auto;"><label>Suggest a Wager (max ${fmt(maxWager)})</label><input type="number" id="fSuggest" min="0" max="${maxWager}" value="0"></div>
         <button class="btn" id="submitSuggest" style="margin-top:10px;">Send Suggestion</button>`;
     } else if(isCaptain){
       if(!allSuggested){
-        body = `<div class="hint">Waiting for teammates to submit their suggested wagers (${Object.keys(teamSuggestions).length}/${members.length})…</div>
+        body = `${captainBanner}<div class="hint">Waiting for teammates to submit their suggested wagers (${Object.keys(teamSuggestions).length}/${members.length})…</div>
           ${Object.entries(teamSuggestions).map(([n,a])=>`<div class="hint">${escapeHtml(n)} suggested ${fmt(a)}</div>`).join('')}`;
       } else if(!wagerLocked){
-        body = `
+        body = `${captainBanner}
           <div class="display" style="font-size:16px;color:var(--gold);margin:10px 0 6px;">Your Team's Suggestions</div>
           ${Object.entries(teamSuggestions).map(([n,a])=>`<div class="hint">${escapeHtml(n)} suggested ${fmt(a)}</div>`).join('')}
           <div class="field" style="max-width:220px;margin:14px auto 0;"><label>Official Wager (max ${fmt(maxWager)})</label><input type="number" id="fWager" min="0" max="${maxWager}" value="0"></div>
           <button class="btn" id="submitFWager" style="margin-top:10px;">Lock In Team's Wager</button>`;
       } else {
-        body = `<div class="hint">Wager locked in at ${fmt(f.wagers[myTeam])} — waiting on other teams' captains…</div>`;
+        body = `${captainBanner}<div class="hint">Wager locked in at ${fmt(f.wagers[myTeam])} — waiting on other teams' captains…</div>`;
       }
     } else {
       body = `<div class="hint">Suggestion sent (${fmt(teamSuggestions[myName])}) — waiting for your captain, ${escapeHtml(f.captains[myTeam])}, to lock in the official wager.</div>`;
@@ -1351,6 +1435,12 @@ function renderPlayerFinal(state){
     body = `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div><div class="reading-status"><div class="pulse"></div> Reading clue aloud…</div>`;
   } else if(f.stage==='answer'){
     const clueBlock = `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div>`;
+    const chatBlock = `
+      <div class="card" style="margin-top:16px;text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
+      <div class="row" style="margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">
+        <input type="text" id="chatInput" placeholder="${isCaptain ? 'Reply to your team…' : 'Suggest an answer to your team…'}">
+        <button class="btn" id="sendChatBtn" style="flex:none;">Send</button>
+      </div>`;
     if(isCaptain){
       body = `${clueBlock}
         ${answered ? `<div class="hint">Answer submitted — waiting on other teams…</div>` : `
@@ -1358,16 +1448,12 @@ function renderPlayerFinal(state){
           <div class="field" style="max-width:340px;margin:0 auto;"><label>Your Team's Answer</label><input type="text" id="fAnswer" placeholder="Type your final answer"></div>
           <button class="btn" id="submitFAnswer" style="margin-top:10px;">Submit Answer</button>
           <div class="hint" style="margin-top:6px;">No need to click submit — whatever's in the box when time runs out gets sent automatically.</div>`}
-        <div class="card" style="margin-top:16px;text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
-        <div class="hint" style="margin-top:6px;">Your team's discussion (read-only for the captain)</div>`;
+        ${chatBlock}
+        <div class="hint" style="margin-top:6px;">Your team's discussion — you can reply too.</div>`;
     } else {
       body = `${clueBlock}
         <div id="finalCountdown" class="hint" style="color:var(--gold);font-weight:700;margin-bottom:8px;"></div>
-        <div class="card" style="text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
-        <div class="row" style="margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">
-          <input type="text" id="chatInput" placeholder="Suggest an answer to your team…">
-          <button class="btn" id="sendChatBtn" style="flex:none;">Send</button>
-        </div>
+        ${chatBlock}
         <div class="hint" style="margin-top:6px;">Your captain, ${escapeHtml(f.captains[myTeam])}, submits the official answer.</div>`;
     }
   } else if(f.stage==='grading'){
