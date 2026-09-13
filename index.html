@@ -257,6 +257,16 @@ function normalizeState(data){
     data.final.wagers = data.final.wagers || {};
     data.final.answers = data.final.answers || {};
     data.final.graded = data.final.graded || {};
+    data.final.captains = data.final.captains || {};
+    data.final.captainVoting = data.final.captainVoting || {};
+    Object.keys(data.final.captainVoting).forEach(n=>{
+      const cv = data.final.captainVoting[n];
+      if(cv){ cv.candidates = cv.candidates || []; cv.votes = cv.votes || {}; }
+    });
+    data.final.wagerSuggestions = data.final.wagerSuggestions || {};
+    Object.keys(data.final.wagerSuggestions).forEach(n=>{ data.final.wagerSuggestions[n] = data.final.wagerSuggestions[n] || {}; });
+    data.final.chat = data.final.chat || {};
+    Object.keys(data.final.chat).forEach(n=>{ data.final.chat[n] = data.final.chat[n] || []; });
   }
   return data;
 }
@@ -331,21 +341,30 @@ function speakClue(categoryName, value, clueText, onDone){
 function testVoice(){
   speakClue('', '', "This is a quick sound check. If you can hear this clearly, your speakers are ready for game night.", ()=>{});
 }
-function playThinkTicks(durationSec){
+function playSoothingTimer(durationSec){
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if(!Ctx) return;
   const ctx = new Ctx();
-  let count = 0;
+  const notes = [523.25, 659.25, 523.25, 440.0]; // a gentle, generic 4-note loop — not the copyrighted theme
+  let step = 0;
+  const stepMs = 900;
+  const totalSteps = Math.round((durationSec*1000)/stepMs);
   const id = setInterval(()=>{
-    if(count>=durationSec){ clearInterval(id); return; }
+    if(step>=totalSteps){ clearInterval(id); return; }
     try{
+      const freq = notes[step % notes.length];
       const osc = ctx.createOscillator(), gain = ctx.createGain();
-      osc.frequency.value = 880; gain.gain.value = 0.04;
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.05, now+0.15);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now+0.8);
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(); osc.stop(ctx.currentTime + 0.07);
+      osc.start(now); osc.stop(now+0.85);
     }catch(e){}
-    count++;
-  }, 1000);
+    step++;
+  }, stepMs);
 }
 function buzzerEffectivelyOpen(state){
   return !!state.buzzerOpen;
@@ -367,7 +386,7 @@ function freshState(code){
     players:{}, teams:{1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}}, activeTeams:[],
     teamNaming:{}, activeClue:null, readingInProgress:false, buzzerOpen:false, buzzedTeam:null, buzzedPlayer:null,
     lockedOutTeams:[], earlyLockUntil:{}, earlyBuzzers:{}, readEndsAt:null, answerDeadline:null, controllingTeam:null, ddWager:null, ddStage:null, revealAnswer:false,
-    final:{stage:'wager',wagers:{},answers:{},graded:{}}, updatedAt:Date.now()
+    final:{stage:'wager',captains:{},captainVoting:{},wagerSuggestions:{},wagers:{},answers:{},chat:{},graded:{}}, updatedAt:Date.now()
   };
 }
 
@@ -426,6 +445,38 @@ function finalizeTeamName(s,n,name,coinFlip,autoAnimal){
 function checkAllNamingDone(s){
   const allDone = s.activeTeams.every(n => !s.teamNaming[n] || s.teamNaming[n].stage==='done');
   if(allDone) s.phase='board';
+}
+
+// ---------- Final Jeopardy: captain selection engine ----------
+function initFinalRound(s){
+  const captains = {}, captainVoting = {};
+  s.activeTeams.forEach(n=>{
+    const members = computeMembers(s,n);
+    if(members.length<=1) captains[n] = members[0];
+    else captainVoting[n] = {stage:'vote', candidates:[...members], votes:{}};
+  });
+  const needsSelection = Object.keys(captainVoting).length > 0;
+  s.final = {
+    stage: needsSelection ? 'select_captain' : 'wager',
+    captains, captainVoting,
+    wagerSuggestions:{}, wagers:{}, answers:{}, chat:{}, graded:{}, answerDeadline:null
+  };
+}
+function advanceCaptainVoting(s, n){
+  const cv = s.final.captainVoting[n];
+  if(!cv) return;
+  const tally={}; cv.candidates.forEach(c=>tally[c]=0);
+  Object.values(cv.votes).forEach(v=>{ if(tally[v]!==undefined) tally[v]++; });
+  const max=Math.max(...Object.values(tally));
+  const winners=Object.keys(tally).filter(c=>tally[c]===max);
+  if(winners.length===1){ s.final.captains[n]=winners[0]; cv.stage='done'; }
+  else if(cv.stage==='vote'){ cv.candidates=winners; cv.votes={}; cv.stage='tiebreak'; }
+  else { const pick=winners[Math.floor(Math.random()*winners.length)]; s.final.captains[n]=pick; cv.stage='done'; }
+  checkAllCaptainsSelected(s);
+}
+function checkAllCaptainsSelected(s){
+  const allDone = s.activeTeams.every(n => s.final.captains[n] !== undefined);
+  if(allDone) s.final.stage = 'wager';
 }
 
 // =================================================================
@@ -807,7 +858,7 @@ function renderHostBoard(state){
       });
     };
   });
-  document.getElementById('toFinal').onclick = ()=> mutate(s=>{ stopSpeaking(); s.phase='final'; s.final={stage:'wager',wagers:{},answers:{},graded:{}}; });
+  document.getElementById('toFinal').onclick = ()=> mutate(s=>{ stopSpeaking(); s.phase='final'; initFinalRound(s); });
 }
 
 function renderHostClue(state){
@@ -927,26 +978,52 @@ function renderHostDailyDouble(state){
   function finishDD(s){ const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true; s.phase='board'; s.activeClue=null; s.ddWager=null; s.ddStage=null; s.revealAnswer=false; s.answerDeadline=null; }
 }
 
+function teamCaptainStatusHtml(state, n){
+  const cv = state.final.captainVoting[n];
+  const captain = state.final.captains[n];
+  const members = computeMembers(state,n);
+  if(captain) return `Captain: <b>${escapeHtml(captain)}</b>`;
+  if(!cv) return 'Solo team';
+  if(cv.stage==='vote') return `Voting for captain (${Object.keys(cv.votes).length}/${members.length} voted)`;
+  return `Tie! Re-voting between: ${cv.candidates.map(escapeHtml).join(', ')}`;
+}
 function renderHostFinal(state){
   const f = state.final; const actives = state.activeTeams;
-  const wagersIn = actives.filter(n=>f.wagers[n]!==undefined);
   const answersIn = actives.filter(n=>f.answers[n]!==undefined);
+  const allWagersLocked = actives.every(n=>f.wagers[n]!==undefined);
+  const secsLeft = f.stage==='answer' && f.answerDeadline ? Math.max(0, Math.ceil((f.answerDeadline-Date.now())/1000)) : null;
   app.innerHTML = `
     ${topbarRoom(state,'Host · Final Round')}
     <div class="card">
-      <div class="hint" style="margin-bottom:10px;">Final clue (hidden from players until you reveal it):</div>
-      <div class="spotlight" style="margin-top:0;">
-        <div class="clue-text">${f.stage!=='wager' ? escapeHtml(state.finalQ.question) : '🔒 Hidden until wagers are in'}</div>
-        ${f.stage==='grading' ? `<div class="answer-text">Correct response: ${escapeHtml(state.finalQ.answer)}</div>` : ''}
-      </div>
-      ${f.stage==='wager' ? `<div class="hint" style="margin:14px 0;">Wagers in: ${wagersIn.length}/${actives.length}</div>
-        <button class="btn block" id="revealFinal" ${wagersIn.length<actives.length?'disabled':''}>Reveal Clue to Players →</button>` : ''}
-      ${f.stage==='answer' ? `<div class="hint" style="margin:14px 0;">Answers submitted: ${answersIn.length}/${actives.length}</div>
+      ${f.stage==='select_captain' ? `
+        <div class="hint" style="margin-bottom:10px;">Teams with more than one player are voting for who represents them as captain.</div>
+        <div class="stack">
+          ${actives.map(n=>`<div class="card" style="border-left:5px solid ${TEAM_COLORS[n]};padding:14px;">
+            <b>${escapeHtml(teamDisplayName(state,n))}</b><br><span class="hint">${teamCaptainStatusHtml(state,n)}</span></div>`).join('')}
+        </div>
+      ` : `
+        <div class="hint" style="margin-bottom:10px;">Final clue (hidden from players until wagers are locked in):</div>
+        <div class="spotlight" style="margin-top:0;">
+          <div class="clue-text">${f.stage!=='wager' ? escapeHtml(state.finalQ.question) : '🔒 Hidden until every captain locks in a wager'}</div>
+          ${f.stage==='reading' ? `<div class="reading-status"><div class="pulse"></div> Reading clue aloud…</div>` : ''}
+          ${f.stage==='answer' && secsLeft!==null ? `<div class="reading-status" style="color:var(--teal);">⏱ ${secsLeft}s remaining</div>` : ''}
+          ${f.stage==='grading' ? `<div class="answer-text">Correct response: ${escapeHtml(state.finalQ.answer)}</div>` : ''}
+        </div>
+      `}
+      ${f.stage==='wager' ? `
+        <div class="stack" style="margin-top:14px;">
+          ${actives.map(n=>`<div class="card" style="border-left:5px solid ${TEAM_COLORS[n]};padding:12px;">
+            <b>${escapeHtml(teamDisplayName(state,n))}</b><br><span class="hint">${(()=>{ const members=computeMembers(state,n); const suggested=Object.keys(f.wagerSuggestions[n]||{}).length; const locked=f.wagers[n]!==undefined; return `Captain ${escapeHtml(f.captains[n])} · ${suggested}/${members.length} suggested · ${locked?`locked in ${fmt(f.wagers[n])}`:'not locked in yet'}`; })()}</span></div>`).join('')}
+        </div>
+        <button class="btn block" id="revealFinal" style="margin-top:14px;" ${!allWagersLocked?'disabled':''}>Reveal Clue to Players →</button>
+      ` : ''}
+      ${f.stage==='reading' ? `<div class="center" style="margin-top:14px;"><button class="btn secondary" id="skipFinalReading">Skip Reading / Start Timer Now</button></div>` : ''}
+      ${f.stage==='answer' ? `<div class="hint" style="margin:14px 0;">Captains answered: ${answersIn.length}/${actives.length}</div>
         <button class="btn block" id="startGrading" ${answersIn.length<actives.length?'disabled':''}>Start Grading →</button>` : ''}
       ${f.stage==='grading' ? `<div class="judge-hint">💡 Doesn't need to be exact phrasing — judge on substance.</div>
         <div class="stack" style="margin-top:10px;">
           ${actives.map(n=>`<div class="kv" style="align-items:center;">
-            <div><b>${escapeHtml(teamDisplayName(state,n))}</b> wagered ${fmt(f.wagers[n]||0)}<br><span class="hint">Answered: "${escapeHtml(f.answers[n]||'(no answer)')}"</span></div>
+            <div><b>${escapeHtml(teamDisplayName(state,n))}</b> (captain ${escapeHtml(f.captains[n])}) wagered ${fmt(f.wagers[n]||0)}<br><span class="hint">Answered: "${escapeHtml(f.answers[n]||'(no answer)')}"</span></div>
             <div>${f.graded[n]===undefined ? `<button class="btn teal" data-n="${n}" data-v="1">✔ Correct</button><button class="btn danger" data-n="${n}" data-v="0">✘ Wrong</button>` : `<span class="hint">${f.graded[n]?'✔ correct':'✘ wrong'}</span>`}</div>
           </div>`).join('')}
         </div>
@@ -956,9 +1033,19 @@ function renderHostFinal(state){
   `;
   const revealFinal = document.getElementById('revealFinal');
   if(revealFinal) revealFinal.onclick = ()=>{
-    speakClue('', '', state.finalQ.question, ()=>{});
-    playThinkTicks(30);
-    mutate(s=>{ s.final.stage='answer'; s.final.answerDeadline=Date.now()+30000; });
+    speakClue('', '', state.finalQ.question, ()=>{
+      mutate(s=>{
+        if(s.final.stage==='reading'){ s.final.stage='answer'; s.final.answerDeadline=Date.now()+30000; }
+      });
+      playSoothingTimer(30);
+    });
+    mutate(s=>{ s.final.stage='reading'; });
+  };
+  const skipFinalReading = document.getElementById('skipFinalReading');
+  if(skipFinalReading) skipFinalReading.onclick = ()=>{
+    stopSpeaking();
+    playSoothingTimer(30);
+    mutate(s=>{ if(s.final.stage==='reading'){ s.final.stage='answer'; s.final.answerDeadline=Date.now()+30000; } });
   };
   const startGrading = document.getElementById('startGrading');
   if(startGrading) startGrading.onclick = ()=> mutate(s=>{ s.final.stage='grading'; });
@@ -1182,40 +1269,152 @@ function renderPlayerDailyDouble(state){
 let finalCountdownTimer = null;
 function renderPlayerFinal(state){
   if(finalCountdownTimer){ clearInterval(finalCountdownTimer); finalCountdownTimer=null; }
+  // Preserve any in-progress typing across the frequent poll-driven rebuilds
+  const savedAnswer = document.getElementById('fAnswer') ? document.getElementById('fAnswer').value : null;
+  const savedChatInput = document.getElementById('chatInput') ? document.getElementById('chatInput').value : null;
+  const focusedId = document.activeElement ? document.activeElement.id : null;
+
   const f = state.final; const myTeam = state.players[myName].team; const teamScore = state.teams[myTeam].score;
-  const wagered = f.wagers[myTeam] !== undefined; const answered = f.answers[myTeam] !== undefined;
+  const isCaptain = f.captains[myTeam] === myName;
+  const answered = f.answers[myTeam] !== undefined;
+  const wagerLocked = f.wagers[myTeam] !== undefined;
+  const teamSuggestions = f.wagerSuggestions[myTeam] || {};
+  const members = computeMembers(state, myTeam);
+  const mySuggested = teamSuggestions[myName] !== undefined;
+  const allSuggested = members.every(m=>teamSuggestions[m]!==undefined);
+  const secsLeft = f.stage==='answer' && f.answerDeadline ? Math.max(0, Math.ceil((f.answerDeadline-Date.now())/1000)) : null;
+  const maxWager = Math.max(0, teamScore);
+
+  function chatHtml(){
+    const msgs = f.chat[myTeam] || [];
+    if(!msgs.length) return `<div class="hint">No messages yet — discuss with your team here.</div>`;
+    return msgs.map(m=>`<div style="text-align:left;font-size:13px;margin-bottom:4px;"><b style="color:var(--gold);">${escapeHtml(m.name)}:</b> ${escapeHtml(m.text)}</div>`).join('');
+  }
+
+  let body = '';
+  if(f.stage==='select_captain'){
+    const captain = f.captains[myTeam];
+    const cv = f.captainVoting[myTeam];
+    if(captain){
+      body = `<div class="hint">Your team's captain is <b style="color:var(--gold);">${escapeHtml(captain)}</b>. Waiting for other teams to finish selecting…</div>`;
+    } else if(cv){
+      const already = cv.votes[myName] !== undefined;
+      body = already ? `<div class="hint">Vote locked in — waiting on your teammates…</div>` : `
+        <div class="display" style="font-size:18px;color:var(--gold);margin-bottom:8px;">${cv.stage==='tiebreak'?'Tie! Vote Again for Captain':'Vote for Your Team Captain'}</div>
+        <div style="max-width:320px;margin:0 auto;">${cv.candidates.map(c=>`<button class="vote-btn" data-cap="${escapeAttr(c)}">${escapeHtml(c)}</button>`).join('')}</div>`;
+    }
+  } else if(f.stage==='wager'){
+    if(!mySuggested){
+      body = `
+        <div class="field" style="max-width:220px;margin:0 auto;"><label>Suggest a Wager (max ${fmt(maxWager)})</label><input type="number" id="fSuggest" min="0" max="${maxWager}" value="0"></div>
+        <button class="btn" id="submitSuggest" style="margin-top:10px;">Send Suggestion</button>`;
+    } else if(isCaptain){
+      if(!allSuggested){
+        body = `<div class="hint">Waiting for teammates to submit their suggested wagers (${Object.keys(teamSuggestions).length}/${members.length})…</div>
+          ${Object.entries(teamSuggestions).map(([n,a])=>`<div class="hint">${escapeHtml(n)} suggested ${fmt(a)}</div>`).join('')}`;
+      } else if(!wagerLocked){
+        body = `
+          <div class="display" style="font-size:16px;color:var(--gold);margin:10px 0 6px;">Your Team's Suggestions</div>
+          ${Object.entries(teamSuggestions).map(([n,a])=>`<div class="hint">${escapeHtml(n)} suggested ${fmt(a)}</div>`).join('')}
+          <div class="field" style="max-width:220px;margin:14px auto 0;"><label>Official Wager (max ${fmt(maxWager)})</label><input type="number" id="fWager" min="0" max="${maxWager}" value="0"></div>
+          <button class="btn" id="submitFWager" style="margin-top:10px;">Lock In Team's Wager</button>`;
+      } else {
+        body = `<div class="hint">Wager locked in at ${fmt(f.wagers[myTeam])} — waiting on other teams' captains…</div>`;
+      }
+    } else {
+      body = `<div class="hint">Suggestion sent (${fmt(teamSuggestions[myName])}) — waiting for your captain, ${escapeHtml(f.captains[myTeam])}, to lock in the official wager.</div>`;
+    }
+  } else if(f.stage==='reading'){
+    body = `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div><div class="reading-status"><div class="pulse"></div> Reading clue aloud…</div>`;
+  } else if(f.stage==='answer'){
+    const clueBlock = `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div>`;
+    if(isCaptain){
+      body = `${clueBlock}
+        ${answered ? `<div class="hint">Answer submitted — waiting on other teams…</div>` : `
+          <div id="finalCountdown" class="hint" style="color:var(--gold);font-weight:700;margin-bottom:8px;"></div>
+          <div class="field" style="max-width:340px;margin:0 auto;"><label>Your Team's Answer</label><input type="text" id="fAnswer" placeholder="Type your final answer"></div>
+          <button class="btn" id="submitFAnswer" style="margin-top:10px;">Submit Answer</button>
+          <div class="hint" style="margin-top:6px;">No need to click submit — whatever's in the box when time runs out gets sent automatically.</div>`}
+        <div class="card" style="margin-top:16px;text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
+        <div class="hint" style="margin-top:6px;">Your team's discussion (read-only for the captain)</div>`;
+    } else {
+      body = `${clueBlock}
+        <div id="finalCountdown" class="hint" style="color:var(--gold);font-weight:700;margin-bottom:8px;"></div>
+        <div class="card" style="text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
+        <div class="row" style="margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">
+          <input type="text" id="chatInput" placeholder="Suggest an answer to your team…">
+          <button class="btn" id="sendChatBtn" style="flex:none;">Send</button>
+        </div>
+        <div class="hint" style="margin-top:6px;">Your captain, ${escapeHtml(f.captains[myTeam])}, submits the official answer.</div>`;
+    }
+  } else if(f.stage==='grading'){
+    body = `<div class="hint">The host is grading answers now…</div>`;
+  }
+
   app.innerHTML = `
     ${topbarRoom(state,myName)}
     <div class="card center">
       <div class="display" style="font-size:24px;color:var(--gold);margin-bottom:10px;">Final Round — ${escapeHtml(teamDisplayName(state,myTeam))}</div>
-      ${f.stage==='wager' ? `${wagered ? `<div class="hint">Wager locked in — waiting on other teams…</div>` : `
-          <div class="field" style="max-width:220px;margin:0 auto;"><label>Your Team's Wager (max ${fmt(Math.max(0,teamScore))})</label><input type="number" id="fWager" min="0" max="${Math.max(0,teamScore)}" value="0"></div>
-          <button class="btn" id="submitFWager" style="margin-top:10px;">Lock In Wager</button>`}` : ''}
-      ${f.stage==='answer' ? `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div>
-        ${answered ? `<div class="hint">Answer submitted — waiting on other teams…</div>` : `
-          <div id="finalCountdown" class="hint" style="color:var(--gold);font-weight:700;margin-bottom:8px;"></div>
-          <div class="field" style="max-width:340px;margin:0 auto;"><label>Your Team's Answer</label><input type="text" id="fAnswer" placeholder="Type your final answer"></div>
-          <button class="btn" id="submitFAnswer" style="margin-top:10px;">Submit Answer</button>`}` : ''}
-      ${f.stage==='grading' ? `<div class="hint">The host is grading answers now…</div>` : ''}
+      ${body}
       ${teamScoreboardHtml(state)}
     </div>
   `;
+
+  if(savedAnswer!==null){ const el=document.getElementById('fAnswer'); if(el) el.value=savedAnswer; }
+  if(savedChatInput!==null){ const el=document.getElementById('chatInput'); if(el) el.value=savedChatInput; }
+  if(focusedId){ const el=document.getElementById(focusedId); if(el && el.focus) el.focus(); }
+  const chatLogEl = document.getElementById('chatLog');
+  if(chatLogEl) chatLogEl.scrollTop = chatLogEl.scrollHeight;
+
+  app.querySelectorAll('[data-cap]').forEach(btn=>{
+    btn.onclick = ()=> mutate(s=>{
+      const nn = s.players[myName].team; const cv = s.final.captainVoting[nn];
+      if(!cv || cv.votes[myName]!==undefined) return;
+      cv.votes[myName] = btn.dataset.cap;
+      const mem = computeMembers(s,nn);
+      if(mem.every(m=>cv.votes[m]!==undefined)) advanceCaptainVoting(s, nn);
+    });
+  });
+  const submitSuggest = document.getElementById('submitSuggest');
+  if(submitSuggest) submitSuggest.onclick = ()=>{
+    const amt = Math.max(0, Math.min(maxWager, +document.getElementById('fSuggest').value || 0));
+    mutate(s=>{
+      const nn = s.players[myName].team;
+      s.final.wagerSuggestions[nn] = s.final.wagerSuggestions[nn] || {};
+      if(s.final.wagerSuggestions[nn][myName] !== undefined) return;
+      s.final.wagerSuggestions[nn][myName] = amt;
+    });
+  };
   const sw = document.getElementById('submitFWager');
-  if(sw) sw.onclick = ()=>{ const amt=Math.max(0,Math.min(Math.max(0,teamScore), +document.getElementById('fWager').value||0)); mutate(s=>{ if(s.final.wagers[myTeam]===undefined) s.final.wagers[myTeam]=amt; }); };
+  if(sw) sw.onclick = ()=>{ const amt=Math.max(0,Math.min(maxWager, +document.getElementById('fWager').value||0)); mutate(s=>{ if(s.final.wagers[myTeam]===undefined) s.final.wagers[myTeam]=amt; }); };
   const submitAnswer = (val)=> mutate(s=>{ if(s.final.answers[myTeam]===undefined) s.final.answers[myTeam] = val; });
   const sa = document.getElementById('submitFAnswer');
   if(sa) sa.onclick = ()=>{ const ans=document.getElementById('fAnswer').value.trim(); if(!ans) return; submitAnswer(ans); };
+  const sendChatBtn = document.getElementById('sendChatBtn');
+  if(sendChatBtn) sendChatBtn.onclick = ()=>{
+    const inp = document.getElementById('chatInput');
+    const text = inp.value.trim();
+    if(!text) return;
+    inp.value = '';
+    mutate(s=>{
+      const nn = s.players[myName].team;
+      s.final.chat[nn] = s.final.chat[nn] || [];
+      s.final.chat[nn].push({name:myName, text, ts:Date.now()});
+    });
+  };
   if(f.stage==='answer' && !answered && state.final.answerDeadline){
     const deadline = state.final.answerDeadline;
     const cdEl = document.getElementById('finalCountdown');
     const tick = ()=>{
       const secs = Math.max(0, Math.ceil((deadline-Date.now())/1000));
-      if(cdEl) cdEl.textContent = `⏳ ${secs}s left to answer`;
+      if(cdEl) cdEl.textContent = `⏳ ${secs}s remaining`;
       if(secs<=0){
         clearInterval(finalCountdownTimer); finalCountdownTimer=null;
-        const inputEl = document.getElementById('fAnswer');
-        const val = inputEl ? inputEl.value.trim() : '';
-        submitAnswer(val || '(no answer — time expired)');
+        if(isCaptain){
+          const inputEl = document.getElementById('fAnswer');
+          const val = inputEl ? inputEl.value.trim() : '';
+          submitAnswer(val || '(no answer — time expired)');
+        }
       }
     };
     tick();
@@ -1283,17 +1482,22 @@ function renderDisplayDailyDouble(state){
 }
 function renderDisplayFinal(state){
   const f = state.final; const actives = state.activeTeams;
+  const secsLeft = f.stage==='answer' && f.answerDeadline ? Math.max(0, Math.ceil((f.answerDeadline-Date.now())/1000)) : null;
   app.innerHTML = `
     ${topbarRoom(state,'Display · Final Round')}
     <div class="card">
-      <div class="spotlight" style="margin-top:0;">
-        <div class="clue-text">${f.stage!=='wager' ? escapeHtml(state.finalQ.question) : '🔒 Final clue — hidden until wagers are in'}</div>
-      </div>
-      <div class="hint center" style="margin-top:14px;">
-        ${f.stage==='wager' ? `Wagers in: ${actives.filter(n=>f.wagers[n]!==undefined).length}/${actives.length}` : ''}
-        ${f.stage==='answer' ? `Answers in: ${actives.filter(n=>f.answers[n]!==undefined).length}/${actives.length}` : ''}
-        ${f.stage==='grading' ? 'The host is judging answers…' : ''}
-      </div>
+      ${f.stage==='select_captain' ? `<div class="hint center">Teams are selecting their Final Jeopardy captains…</div>` : `
+        <div class="spotlight" style="margin-top:0;">
+          <div class="clue-text">${f.stage!=='wager' ? escapeHtml(state.finalQ.question) : '🔒 Final clue — hidden until every captain locks in a wager'}</div>
+          ${f.stage==='reading' ? `<div class="reading-status"><div class="pulse"></div> Reading clue aloud…</div>` : ''}
+          ${f.stage==='answer' && secsLeft!==null ? `<div class="reading-status" style="color:var(--teal);">⏱ ${secsLeft}s remaining</div>` : ''}
+        </div>
+        <div class="hint center" style="margin-top:14px;">
+          ${f.stage==='wager' ? `Captains locked in: ${actives.filter(n=>f.wagers[n]!==undefined).length}/${actives.length}` : ''}
+          ${f.stage==='answer' ? `Captains answered: ${actives.filter(n=>f.answers[n]!==undefined).length}/${actives.length}` : ''}
+          ${f.stage==='grading' ? 'The host is judging answers…' : ''}
+        </div>
+      `}
       ${teamScoreboardHtml(state)}
     </div>
   `;
