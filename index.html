@@ -1095,7 +1095,7 @@ function renderHostFinal(state){
       ${f.stage==='wager' ? `
         <div class="stack" style="margin-top:14px;">
           ${actives.map(n=>`<div class="card" style="border-left:5px solid ${TEAM_COLORS[n]};padding:12px;">
-            <b>${escapeHtml(teamDisplayName(state,n))}</b><br><span class="hint">${(()=>{ const members=computeMembers(state,n); const suggested=Object.keys(f.wagerSuggestions[n]||{}).length; const locked=f.wagers[n]!==undefined; return `Captain ${escapeHtml(f.captains[n])} · ${suggested}/${members.length} suggested · ${locked?`locked in ${fmt(f.wagers[n])}`:'not locked in yet'}`; })()}</span></div>`).join('')}
+            <b>${escapeHtml(teamDisplayName(state,n))}</b><br><span class="hint">${(()=>{ const members=computeMembers(state,n); const suggested=Object.keys(f.wagerSuggestions[n]||{}).length; const locked=f.wagers[n]!==undefined; const suggestPart = members.length<=2 ? '' : `${suggested}/${members.length} suggested · `; return `Captain ${escapeHtml(f.captains[n])} · ${suggestPart}${locked?`locked in ${fmt(f.wagers[n])}`:'not locked in yet'}`; })()}</span></div>`).join('')}
         </div>
         <button class="btn block" id="revealFinal" style="margin-top:14px;" ${!allWagersLocked?'disabled':''}>Reveal Clue to Players →</button>
       ` : ''}
@@ -1410,14 +1410,28 @@ function renderPlayerFinal(state){
         <div style="max-width:320px;margin:0 auto;">${cv.candidates.map(c=>`<button class="vote-btn" data-cap="${escapeAttr(c)}">${escapeHtml(c)}</button>`).join('')}</div>`;
     }
   } else if(f.stage==='wager'){
-    const captainBanner = isCaptain ? `<div class="card naming-card" style="text-align:left;margin-bottom:14px;"><b>🎖️ You're the Captain!</b><div class="hint" style="margin-top:6px;">You'll see everyone's suggested wager and lock in the official one for your team. In a moment, you'll also be the one writing the team's final answer — everyone else can chat with you to help.</div></div>` : '';
-    const wagerChatBlock = `
+    const captainBanner = isCaptain ? `<div class="card naming-card" style="text-align:left;margin-bottom:14px;"><b>🎖️ You're the Captain!</b><div class="hint" style="margin-top:6px;">${members.length<=1 ? "You'll enter the official wager for your team directly." : (members.length===2 ? "You'll enter the official wager for your team directly — chat with your teammate first if you want." : "You'll see everyone's suggested wager and lock in the official one for your team.")} In a moment, you'll also be the one writing the team's final answer.</div></div>` : '';
+    const wagerChatBlock = members.length > 1 ? `
       <div class="card" style="margin-top:16px;text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
       <div class="row" style="margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">
         <input type="text" id="chatInput" placeholder="Discuss your wager with your team…">
         <button class="btn" id="sendChatBtn" style="flex:none;">Send</button>
-      </div>`;
-    if(!mySuggested){
+      </div>` : '';
+    const smallTeam = members.length <= 2;
+    if(smallTeam){
+      if(isCaptain){
+        if(!wagerLocked){
+          body = `${captainBanner}
+            <div class="field" style="max-width:220px;margin:14px auto 0;"><label>Official Wager (max ${fmt(maxWager)})</label><input type="number" id="fWager" min="0" max="${maxWager}" value="0"></div>
+            <button class="btn" id="submitFWager" style="margin-top:10px;">Lock In Team's Wager</button>
+            ${wagerChatBlock}`;
+        } else {
+          body = `${captainBanner}<div class="hint">Wager locked in at ${fmt(f.wagers[myTeam])} — waiting on other teams' captains…</div>${wagerChatBlock}`;
+        }
+      } else {
+        body = `<div class="hint">Your captain, ${escapeHtml(f.captains[myTeam])}, is deciding the wager. Chat with them below if you want to weigh in.</div>${wagerChatBlock}`;
+      }
+    } else if(!mySuggested){
       body = `${captainBanner}
         <div class="field" style="max-width:220px;margin:0 auto;"><label>Suggest a Wager (max ${fmt(maxWager)})</label><input type="number" id="fSuggest" min="0" max="${maxWager}" value="0"></div>
         <button class="btn" id="submitSuggest" style="margin-top:10px;">Send Suggestion</button>
@@ -1444,12 +1458,12 @@ function renderPlayerFinal(state){
     body = `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div><div class="reading-status"><div class="pulse"></div> Reading clue aloud…</div>`;
   } else if(f.stage==='answer'){
     const clueBlock = `<div class="clue-text" style="margin:14px 0;">${escapeHtml(state.finalQ.question)}</div>`;
-    const chatBlock = `
+    const chatBlock = members.length > 1 ? `
       <div class="card" style="margin-top:16px;text-align:left;max-height:180px;overflow-y:auto;" id="chatLog">${chatHtml()}</div>
       <div class="row" style="margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">
         <input type="text" id="chatInput" placeholder="${isCaptain ? 'Reply to your team…' : 'Suggest an answer to your team…'}">
         <button class="btn" id="sendChatBtn" style="flex:none;">Send</button>
-      </div>`;
+      </div>` : '';
     if(isCaptain){
       body = `${clueBlock}
         ${answered ? `<div class="hint">Answer submitted — waiting on other teams…</div>` : `
@@ -1458,7 +1472,7 @@ function renderPlayerFinal(state){
           <button class="btn" id="submitFAnswer" style="margin-top:10px;">Submit Answer</button>
           <div class="hint" style="margin-top:6px;">No need to click submit — whatever's in the box when time runs out gets sent automatically.</div>`}
         ${chatBlock}
-        <div class="hint" style="margin-top:6px;">Your team's discussion — you can reply too.</div>`;
+        ${members.length > 1 ? `<div class="hint" style="margin-top:6px;">Your team's discussion — you can reply too.</div>` : ''}`;
     } else {
       body = `${clueBlock}
         <div id="finalCountdown" class="hint" style="color:var(--gold);font-weight:700;margin-bottom:8px;"></div>
