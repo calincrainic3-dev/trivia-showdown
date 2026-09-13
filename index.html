@@ -266,7 +266,7 @@ function normalizeState(data){
     data.final.wagerSuggestions = data.final.wagerSuggestions || {};
     Object.keys(data.final.wagerSuggestions).forEach(n=>{ data.final.wagerSuggestions[n] = data.final.wagerSuggestions[n] || {}; });
     data.final.chat = data.final.chat || {};
-    Object.keys(data.final.chat).forEach(n=>{ data.final.chat[n] = data.final.chat[n] || []; });
+    Object.keys(data.final.chat).forEach(n=>{ data.final.chat[n] = data.final.chat[n] || {}; });
   }
   return data;
 }
@@ -276,6 +276,19 @@ async function saveRoom(code, state){
     await fetch(roomPath(code), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state) });
   }catch(e){ console.error('storage save failed', e); }
   return state;
+}
+async function patchPath(subPath, valueObj){
+  try{
+    await fetch(`${FIREBASE_DB_URL}/rooms/${myRoomCode}/${subPath}.json`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(valueObj)
+    });
+  }catch(e){ console.error('patch failed', e); }
+}
+// Safely record one person's submission (merge-only, never clobbers a teammate's simultaneous write),
+// then separately re-check with the latest data whether everyone's in and something should advance.
+async function submitAndCheck(subPath, patchObj, checkFn){
+  await patchPath(subPath, patchObj);
+  await mutate(checkFn);
 }
 function genCode(){ const chars='ABCDEFGHJKLMNPQRSTUVWXYZ'; let c=''; for(let i=0;i<4;i++) c+=chars[Math.floor(Math.random()*chars.length)]; return c; }
 function fmt(n){ const neg=n<0; return (neg?'-':'')+'$'+Math.abs(n).toLocaleString(); }
@@ -1109,7 +1122,7 @@ function renderPlayerTeamNaming(state){
     const send = document.getElementById('sendSuggest');
     if(send) send.onclick = ()=>{ const val=document.getElementById('nameSuggest').value.trim(); if(!val) return; submitSuggestion(val); };
     const skip = document.getElementById('skipSuggest');
-    if(skip) skip.onclick = ()=> submitSuggestion(null);
+    if(skip) skip.onclick = ()=> submitSuggestion('');
   } else {
     const already = naming.votes[myName] !== undefined;
     app.innerHTML = `${topbarRoom(state,myName)}
@@ -1120,12 +1133,22 @@ function renderPlayerTeamNaming(state){
     app.querySelectorAll('.vote-btn').forEach(btn=> btn.onclick = ()=> submitVote(btn.dataset.c));
   }
   function submitSuggestion(text){
-    mutate(s=>{ const nn=s.players[myName].team, nm=s.teamNaming[nn]; if(!nm || nm.suggestions[myName]!==undefined) return;
-      nm.suggestions[myName]=text; const members=computeMembers(s,nn); if(members.every(m=>nm.suggestions[m]!==undefined)) advanceNaming(s,nn); });
+    const nn = state.players[myName].team;
+    submitAndCheck(`teamNaming/${nn}/suggestions`, {[myName]: text}, s=>{
+      const nm = s.teamNaming[nn];
+      if(!nm || nm.stage!=='suggest') return;
+      const members = computeMembers(s, nn);
+      if(members.every(m=>nm.suggestions[m]!==undefined)) advanceNaming(s, nn);
+    });
   }
   function submitVote(choice){
-    mutate(s=>{ const nn=s.players[myName].team, nm=s.teamNaming[nn]; if(!nm || nm.votes[myName]!==undefined) return;
-      nm.votes[myName]=choice; const members=computeMembers(s,nn); if(members.every(m=>nm.votes[m]!==undefined)) advanceNaming(s,nn); });
+    const nn = state.players[myName].team;
+    submitAndCheck(`teamNaming/${nn}/votes`, {[myName]: choice}, s=>{
+      const nm = s.teamNaming[nn];
+      if(!nm || (nm.stage!=='vote' && nm.stage!=='tiebreak')) return;
+      const members = computeMembers(s, nn);
+      if(members.every(m=>nm.votes[m]!==undefined)) advanceNaming(s, nn);
+    });
   }
 }
 
@@ -1286,7 +1309,7 @@ function renderPlayerFinal(state){
   const maxWager = Math.max(0, teamScore);
 
   function chatHtml(){
-    const msgs = f.chat[myTeam] || [];
+    const msgs = Object.values(f.chat[myTeam] || {}).sort((a,b)=>a.ts-b.ts);
     if(!msgs.length) return `<div class="hint">No messages yet — discuss with your team here.</div>`;
     return msgs.map(m=>`<div style="text-align:left;font-size:13px;margin-bottom:4px;"><b style="color:var(--gold);">${escapeHtml(m.name)}:</b> ${escapeHtml(m.text)}</div>`).join('');
   }
@@ -1367,23 +1390,17 @@ function renderPlayerFinal(state){
   if(chatLogEl) chatLogEl.scrollTop = chatLogEl.scrollHeight;
 
   app.querySelectorAll('[data-cap]').forEach(btn=>{
-    btn.onclick = ()=> mutate(s=>{
-      const nn = s.players[myName].team; const cv = s.final.captainVoting[nn];
-      if(!cv || cv.votes[myName]!==undefined) return;
-      cv.votes[myName] = btn.dataset.cap;
-      const mem = computeMembers(s,nn);
-      if(mem.every(m=>cv.votes[m]!==undefined)) advanceCaptainVoting(s, nn);
+    btn.onclick = ()=> submitAndCheck(`final/captainVoting/${myTeam}/votes`, {[myName]: btn.dataset.cap}, s=>{
+      const cv = s.final.captainVoting[myTeam];
+      if(!cv) return;
+      const mem = computeMembers(s, myTeam);
+      if(mem.every(m=>cv.votes[m]!==undefined)) advanceCaptainVoting(s, myTeam);
     });
   });
   const submitSuggest = document.getElementById('submitSuggest');
   if(submitSuggest) submitSuggest.onclick = ()=>{
     const amt = Math.max(0, Math.min(maxWager, +document.getElementById('fSuggest').value || 0));
-    mutate(s=>{
-      const nn = s.players[myName].team;
-      s.final.wagerSuggestions[nn] = s.final.wagerSuggestions[nn] || {};
-      if(s.final.wagerSuggestions[nn][myName] !== undefined) return;
-      s.final.wagerSuggestions[nn][myName] = amt;
-    });
+    patchPath(`final/wagerSuggestions/${myTeam}`, {[myName]: amt}).then(()=> mutate(()=>{}));
   };
   const sw = document.getElementById('submitFWager');
   if(sw) sw.onclick = ()=>{ const amt=Math.max(0,Math.min(maxWager, +document.getElementById('fWager').value||0)); mutate(s=>{ if(s.final.wagers[myTeam]===undefined) s.final.wagers[myTeam]=amt; }); };
@@ -1396,11 +1413,8 @@ function renderPlayerFinal(state){
     const text = inp.value.trim();
     if(!text) return;
     inp.value = '';
-    mutate(s=>{
-      const nn = s.players[myName].team;
-      s.final.chat[nn] = s.final.chat[nn] || [];
-      s.final.chat[nn].push({name:myName, text, ts:Date.now()});
-    });
+    const msgId = Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    patchPath(`final/chat/${myTeam}`, {[msgId]: {name:myName, text, ts:Date.now()}}).then(()=> mutate(()=>{}));
   };
   if(f.stage==='answer' && !answered && state.final.answerDeadline){
     const deadline = state.final.answerDeadline;
