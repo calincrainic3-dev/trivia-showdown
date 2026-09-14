@@ -49,7 +49,7 @@
   .choice-card:hover{border-color:var(--gold);transform:translateY(-2px);}
   .choice-card .icon{font-size:40px;margin-bottom:10px;}
   .choice-card h3{margin:6px 0;font-size:20px;}
-  .board{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:18px;}
+  .board{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:18px;}
   .cat-head{background:var(--navy-card-2);border:1px solid var(--line);border-radius:8px;padding:12px 8px;text-align:center;font-family:'Anton',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:0.03em;line-height:1.25;min-height:64px;display:flex;align-items:center;justify-content:center;color:var(--gold);}
   .clue-tile{background:linear-gradient(160deg,#16205088,#0d1436);border:1px solid var(--line);border-radius:8px;padding:18px 8px;text-align:center;font-family:'Anton',sans-serif;font-size:22px;color:var(--gold);cursor:pointer;transition:.12s;}
   .clue-tile:hover{background:#212c66;transform:scale(1.03);}
@@ -120,8 +120,10 @@
 /* ---------------------------------------------------------
    TRIVIA SHOWDOWN — team edition w/ colored buzzers + packs
 --------------------------------------------------------- */
-const VALUES = [200,400,600,800,1000];
-const CATS_DEFAULT = 5;
+const VALUES_R1 = [200,400,600,800,1000];
+const VALUES_R2 = [400,800,1200,1600,2000];
+function roundValues(round){ return round===2 ? VALUES_R2 : VALUES_R1; }
+const CATS_PER_ROUND = 6;
 const CLUES_PER_CAT = 5;
 const POLL_MS = 400;
 const TEAM_SIZE_MAX = 7;
@@ -133,7 +135,7 @@ let myRole = null, myName = null, myRoomCode = null, pollTimer = null, lastStamp
 let myHostToken = null;
 let pendingCarryover = null;
 function genHostToken(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-let draftBoard = null, draftFinal = {question:'', answer:''};
+let draftBoardR1 = null, draftBoardR2 = null, draftFinal = {question:'', answer:''};
 let localBuzzLock = false;
 let currentState = null;
 const app = document.getElementById('app');
@@ -142,9 +144,9 @@ const app = document.getElementById('app');
 function mk(v,text,answer,dd){ return {value:v, text, answer, dailyDouble:!!dd, revealed:false, answered:false}; }
 const STANDARD_PACKS = [
   {
-    id:'pack1', title:'Classic Trivia Night', blurb:'Geography, science, movies, history & wordplay — a well-rounded starter pack.',
+    id:'pack1', title:'Classic Trivia Night', blurb:'A full two-round game — geography, science, movies, history, capitals, literature, and more.',
     finalQ:{question:"This South American capital sits over 11,000 feet above sea level, making it one of the highest capital cities in the world.", answer:"What is La Paz, Bolivia?"},
-    categories:[
+    round1:[
       {name:'World Geography', clues:[
         mk(200,"This river is the longest in the world, flowing through northeastern Africa.","What is the Nile?"),
         mk(400,"This is the smallest country in the world by both area and population.","What is Vatican City?"),
@@ -179,13 +181,64 @@ const STANDARD_PACKS = [
         mk(600,"This literary device compares two unlike things using 'like' or 'as.'","What is a simile?"),
         mk(800,"This term describes a play on words that exploits multiple meanings of a term.","What is a pun?"),
         mk(1000,"This Shakespearean play features the line 'To be, or not to be.'","What is Hamlet?")
+      ]},
+      {name:'Famous Firsts', clues:[
+        mk(200,"This was the first country to grant women the right to vote nationally, in 1893.","What is New Zealand?"),
+        mk(400,"This Soviet cosmonaut became the first human in space in 1961.","Who is Yuri Gagarin?"),
+        mk(600,"This English physician developed the first successful vaccine, targeting smallpox.","Who is Edward Jenner?"),
+        mk(800,"This nation was the first to detonate a nuclear weapon, at the Trinity test in 1945.","What is the United States?"),
+        mk(1000,"This athlete was the first Black player in Major League Baseball's modern era, debuting in 1947.","Who is Jackie Robinson?")
+      ]}
+    ],
+    round2:[
+      {name:'World Capitals', clues:[
+        mk(400,"This city is the capital of Japan.","What is Tokyo?"),
+        mk(800,"This city, laced with canals, is the capital of the Netherlands.","What is Amsterdam?"),
+        mk(1200,"This capital of Egypt sits along the Nile River.","What is Cairo?"),
+        mk(1600,"This is the capital of Canada — not Toronto, which is the country's largest city.","What is Ottawa?"),
+        mk(2000,"This planned city was chosen as Australia's capital as a compromise between Sydney and Melbourne.","What is Canberra?", true)
+      ]},
+      {name:'Human Body', clues:[
+        mk(400,"This is the largest organ in the human body.","What is the skin?"),
+        mk(800,"This four-chambered organ pumps blood throughout the body.","What is the heart?"),
+        mk(1200,"This is the longest bone in the human body.","What is the femur?"),
+        mk(1600,"This organ produces insulin to regulate blood sugar.","What is the pancreas?"),
+        mk(2000,"This is the smallest bone in the human body, found in the middle ear.","What is the stapes (stirrup)?")
+      ]},
+      {name:'Classic Literature', clues:[
+        mk(400,"This Jane Austen novel opens with the line, 'It is a truth universally acknowledged...'","What is Pride and Prejudice?"),
+        mk(800,"This Herman Melville novel follows Captain Ahab's hunt for a white whale.","What is Moby-Dick?"),
+        mk(1200,"This dystopian George Orwell novel introduced the phrase 'Big Brother is watching.'","What is 1984?"),
+        mk(1600,"This Harper Lee novel is narrated by young Scout Finch.","What is To Kill a Mockingbird?"),
+        mk(2000,"This epic poem by Homer follows Odysseus's long journey home after the Trojan War.","What is The Odyssey?", true)
+      ]},
+      {name:'Music & Artists', clues:[
+        mk(400,"This solo artist earned the nickname 'The Queen of Pop' with hits like Like a Virgin.","Who is Madonna?"),
+        mk(800,"This singer-songwriter's albums include Folklore and 1989.","Who is Taylor Swift?"),
+        mk(1200,"This Jamaican reggae icon recorded 'No Woman, No Cry.'","Who is Bob Marley?"),
+        mk(1600,"This Austrian composer wrote over 600 works before his death at age 35, including The Magic Flute.","Who is Wolfgang Amadeus Mozart?"),
+        mk(2000,"This girl group's members included Beyoncé, Kelly Rowland, and Michelle Williams.","What is Destiny's Child?")
+      ]},
+      {name:'Animal Kingdom', clues:[
+        mk(400,"This is the largest land animal on Earth.","What is the elephant?"),
+        mk(800,"This is the fastest land animal, capable of speeds over 60 mph.","What is the cheetah?"),
+        mk(1200,"This Australian marsupial carries its young in a pouch and can cover over 25 feet in a single hop.","What is the kangaroo?"),
+        mk(1600,"This is the only mammal capable of true, sustained flight.","What is the bat?"),
+        mk(2000,"This is the largest animal known to have ever lived, even bigger than any dinosaur.","What is the blue whale?")
+      ]},
+      {name:'Tech & Inventions', clues:[
+        mk(400,"This company was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.","What is Apple?"),
+        mk(800,"This social media platform, founded by Mark Zuckerberg, launched in 2004.","What is Facebook?"),
+        mk(1200,"This search engine, founded in 1998, became a verb meaning to look something up online.","What is Google?"),
+        mk(1600,"This disappearing-message and photo app was founded in 2011.","What is Snapchat?"),
+        mk(2000,"This electric car company, founded in 2003, is led by Elon Musk.","What is Tesla?")
       ]}
     ]
   },
   {
-    id:'pack2', title:'Around the World Trivia', blurb:'Music, sports, food, space & inventions — a second full round ready to go.',
+    id:'pack2', title:'Around the World Trivia', blurb:'A full two-round game — music, sports, mythology, world leaders, chemistry, pop culture, and more.',
     finalQ:{question:"This 15th-century invention by Johannes Gutenberg revolutionized the spread of information.", answer:"What is the printing press?"},
-    categories:[
+    round1:[
       {name:'Music & Artists', clues:[
         mk(200,"This 'King of Pop' released the best-selling album of all time, Thriller.","Who is Michael Jackson?"),
         mk(400,"This British rock band released the album Abbey Road in 1969.","Who are The Beatles?"),
@@ -220,6 +273,57 @@ const STANDARD_PACKS = [
         mk(600,"This flying machine, built by two American brothers, achieved the first powered flight in 1903.","What is the airplane?"),
         mk(800,"This Swedish inventor created dynamite and later established a famous international prize.","Who is Alfred Nobel?"),
         mk(1000,"This computer scientist created the first website in 1991, launching the World Wide Web.","Who is Tim Berners-Lee?")
+      ]},
+      {name:'Mythology', clues:[
+        mk(200,"In Greek mythology, this god rules over the sea.","Who is Poseidon?"),
+        mk(400,"This Norse god of thunder wields the hammer Mjolnir.","Who is Thor?"),
+        mk(600,"In Egyptian mythology, this jackal-headed god guides the dead to the afterlife.","Who is Anubis?"),
+        mk(800,"This Greek hero completed twelve labors, including slaying the Nemean lion.","Who is Hercules?"),
+        mk(1000,"In Greek mythology, opening this container, despite warnings, released evil into the world.","What is Pandora's Box?")
+      ]}
+    ],
+    round2:[
+      {name:'World Leaders', clues:[
+        mk(400,"This man served as the first President of the United States.","Who is George Washington?"),
+        mk(800,"This British Prime Minister led the UK through most of World War II.","Who is Winston Churchill?"),
+        mk(1200,"This South African leader spent 27 years in prison before becoming president in 1994.","Who is Nelson Mandela?"),
+        mk(1600,"This queen ruled England for 44 years during the Elizabethan era, defeating the Spanish Armada.","Who is Queen Elizabeth I?"),
+        mk(2000,"This Indian leader used nonviolent civil disobedience to help India gain independence from Britain.","Who is Mahatma Gandhi?")
+      ]},
+      {name:'Board & Card Games', clues:[
+        mk(400,"This board game involves buying and trading properties like Boardwalk and Park Place.","What is Monopoly?"),
+        mk(800,"This word-forming board game uses letter tiles, with the letter Q worth 10 points.","What is Scrabble?"),
+        mk(1200,"This strategy board game is played on an 8x8 board and ends in 'checkmate.'","What is chess?"),
+        mk(1600,"This deduction game challenges players to solve a murder by naming the culprit, weapon, and room.","What is Clue (Cluedo)?"),
+        mk(2000,"This tile-based game originating in China is typically played with four players matching sets like bamboos and dots.","What is Mahjong?", true)
+      ]},
+      {name:'Chemistry', clues:[
+        mk(400,"This is the chemical formula for water.","What is H2O?"),
+        mk(800,"This noble gas is used to fill balloons because it's lighter than air.","What is helium?"),
+        mk(1200,"This scientist created the periodic table of elements in 1869.","Who is Dmitri Mendeleev?"),
+        mk(1600,"This acid, found in the stomach, helps digest food.","What is hydrochloric acid?"),
+        mk(2000,"This is the most abundant element in the universe.","What is hydrogen?")
+      ]},
+      {name:'Pop Culture', clues:[
+        mk(400,"This streaming service produced the hit series Stranger Things.","What is Netflix?"),
+        mk(800,"This social media app, known for short-form videos, is owned by ByteDance.","What is TikTok?"),
+        mk(1200,"This British boy band, formed on The X Factor in 2010, included Harry Styles.","What is One Direction?"),
+        mk(1600,"This superhero franchise's Phase One culminated in 2012's The Avengers.","What is the Marvel Cinematic Universe?"),
+        mk(2000,"This South Korean boy band became global icons with hits like 'Dynamite' and 'Butter.'","What is BTS?", true)
+      ]},
+      {name:'Rivers & Oceans', clues:[
+        mk(400,"This is the largest ocean on Earth.","What is the Pacific Ocean?"),
+        mk(800,"This river, the longest in South America, flows through the Amazon rainforest.","What is the Amazon River?"),
+        mk(1200,"This sea, bordered by Israel and Jordan, is so salty that swimmers float easily.","What is the Dead Sea?"),
+        mk(1600,"This river flows through the heart of Paris, France.","What is the Seine?"),
+        mk(2000,"This is the deepest known point in Earth's oceans, located in the Pacific.","What is the Mariana Trench?")
+      ]},
+      {name:'Language & Words', clues:[
+        mk(400,"This is the most widely spoken native language in the world.","What is Mandarin Chinese?"),
+        mk(800,"This Latin-rooted language is the official language of Brazil.","What is Portuguese?"),
+        mk(1200,"This alphabet, used in Russia, has 33 letters.","What is the Cyrillic alphabet?"),
+        mk(1600,"This constructed language was invented in 1887 to be an easy-to-learn universal second language.","What is Esperanto?"),
+        mk(2000,"This ancient Egyptian writing system combined picture-based and alphabetic elements.","What are hieroglyphics?")
       ]}
     ]
   }
@@ -301,12 +405,12 @@ async function submitAndCheck(subPath, patchObj, checkFn){
   await patchPath(subPath, patchObj);
   await mutate(checkFn);
 }
-async function saveCustomBoard(title, categories, finalQ){
+async function saveCustomBoard(title, round1, round2, finalQ){
   const id = Date.now()+'_'+Math.random().toString(36).slice(2,6);
   try{
     await fetch(`${FIREBASE_DB_URL}/savedBoards/${id}.json`, {
       method:'PUT', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({title, categories, finalQ, savedAt: Date.now()})
+      body: JSON.stringify({title, round1, round2, finalQ, savedAt: Date.now()})
     });
   }catch(e){ console.error('save board failed', e); }
   return id;
@@ -414,18 +518,20 @@ function buzzerEffectivelyOpen(state){
 }
 
 // ---------- board defaults ----------
-function blankBoard(){
+function blankBoard(round){
+  const vals = roundValues(round);
   const cats=[];
-  for(let c=0;c<CATS_DEFAULT;c++){
+  for(let c=0;c<CATS_PER_ROUND;c++){
     const clues=[];
-    for(let i=0;i<CLUES_PER_CAT;i++) clues.push(mk(VALUES[i], '', '', false));
+    for(let i=0;i<CLUES_PER_CAT;i++) clues.push(mk(vals[i], '', '', false));
     cats.push({name:'', clues});
   }
   return cats;
 }
+function activeCats(state){ return state.round===2 ? state.categoriesR2 : state.categoriesR1; }
 function freshState(code){
   return {
-    code, phase:'lobby', categories:draftBoard, finalQ:{question:draftFinal.question, answer:draftFinal.answer},
+    code, phase:'lobby', round:1, categoriesR1:draftBoardR1, categoriesR2:draftBoardR2, finalQ:{question:draftFinal.question, answer:draftFinal.answer},
     players:{}, teams:{1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}}, activeTeams:[],
     teamNaming:{}, activeClue:null, readingInProgress:false, buzzerOpen:false, buzzedTeam:null, buzzedPlayer:null,
     lockedOutTeams:[], earlyLockUntil:{}, earlyBuzzers:{}, readEndsAt:null, answerDeadline:null, controllingTeam:null, ddWager:null, ddStage:null, revealAnswer:false,
@@ -616,7 +722,7 @@ async function renderBoardChoice(){
       <button class="btn secondary" id="backHome">← Back</button></div>
     <div class="browser-note">🔊 This game reads clues aloud with your browser's built-in voice. For the clearest, most natural-sounding announcer, host from <b>Chrome or Edge</b> on whichever device is connected to your speakers.</div>
     <div class="stack">
-      <div class="pack-card" id="goCustom"><h4>✏️ Build a Custom Board</h4><div class="hint">Write your own categories and clues — perfect for a themed game like a birthday round.</div></div>
+      <div class="pack-card" id="goCustom"><h4>✏️ Build a Custom Board</h4><div class="hint">Write your own Round 1 and Round 2 categories and clues — perfect for a themed game like a birthday round.</div></div>
       ${STANDARD_PACKS.map(p=>`
         <div class="pack-card" data-pack="${p.id}"><h4>📦 ${escapeHtml(p.title)}</h4><div class="hint">${escapeHtml(p.blurb)}</div></div>
       `).join('')}
@@ -624,11 +730,12 @@ async function renderBoardChoice(){
     </div>
   `;
   document.getElementById('backHome').onclick = renderHome;
-  document.getElementById('goCustom').onclick = ()=>{ draftBoard = blankBoard(); draftFinal = {question:'',answer:''}; renderHostSetup(); };
+  document.getElementById('goCustom').onclick = ()=>{ draftBoardR1 = blankBoard(1); draftBoardR2 = blankBoard(2); draftFinal = {question:'',answer:''}; renderHostSetup(); };
   app.querySelectorAll('[data-pack]').forEach(el=>{
     el.onclick = ()=>{
       const pack = STANDARD_PACKS.find(p=>p.id===el.dataset.pack);
-      draftBoard = deepClone(pack.categories);
+      draftBoardR1 = deepClone(pack.round1);
+      draftBoardR2 = deepClone(pack.round2);
       draftFinal = deepClone(pack.finalQ);
       renderHostSetup();
     };
@@ -637,43 +744,57 @@ async function renderBoardChoice(){
   const wrap = document.getElementById('savedBoardsWrap');
   if(!wrap) return; // user navigated away before this resolved
   wrap.innerHTML = saved.length ? saved.map(b=>`
-    <div class="pack-card" data-saved="${escapeAttr(b.id)}"><h4>💾 ${escapeHtml(b.title)}</h4><div class="hint">Your saved board — ${b.categories.length} categories</div></div>
+    <div class="pack-card" data-saved="${escapeAttr(b.id)}"><h4>💾 ${escapeHtml(b.title)}</h4><div class="hint">Your saved board — ${b.round1.length} + ${b.round2.length} categories</div></div>
   `).join('') : '';
   wrap.querySelectorAll('[data-saved]').forEach(el=>{
     el.onclick = ()=>{
       const b = saved.find(x=>x.id===el.dataset.saved);
-      draftBoard = deepClone(b.categories);
+      draftBoardR1 = deepClone(b.round1);
+      draftBoardR2 = deepClone(b.round2);
       draftFinal = deepClone(b.finalQ);
       renderHostSetup();
     };
   });
 }
 
-function renderHostSetup(){
+function renderHostSetup(editingRound){
+  editingRound = editingRound || 1;
+  const draft = editingRound===2 ? draftBoardR2 : draftBoardR1;
+  const vals = roundValues(editingRound);
   app.innerHTML = `
     <div class="topbar"><div class="brand"><div class="dot"></div><h1 class="display">Build Your Board</h1></div>
       <button class="btn secondary" id="backChoice">← Back</button></div>
     <div class="card">
-      <div class="hint" style="margin-bottom:16px;">Review or edit the 5×5 board below. Toggle <b>Daily Double</b> on any one clue per category.
+      <div class="row" style="margin-bottom:14px;">
+        <button class="btn ${editingRound===1?'':'secondary'}" id="tabR1">Round 1 (${fmt(VALUES_R1[0])}–${fmt(VALUES_R1[4])})</button>
+        <button class="btn ${editingRound===2?'':'secondary'}" id="tabR2">Round 2 (${fmt(VALUES_R2[0])}–${fmt(VALUES_R2[4])})</button>
+      </div>
+      <div class="hint" style="margin-bottom:16px;">Editing <b>Round ${editingRound}</b>: 6 categories × 5 clues. Toggle <b>Daily Double</b> on ${editingRound===2?'two clues (Round 2 has two)':'one clue (Round 1 has one)'}.
       Up to 3 teams of up to 7 players each will play — players pick a team when they join.</div>
       <div id="catEditors"></div>
-      <div class="field" style="margin-top:8px;"><label>Final Round Clue</label>
-        <textarea id="finalQ" placeholder="Final clue text, read after the board is cleared...">${escapeHtml(draftFinal.question)}</textarea></div>
-      <div class="field"><label>Final Round Correct Response</label>
+      <div class="field" style="margin-top:8px;"><label>Final Jeopardy Clue</label>
+        <textarea id="finalQ" placeholder="Final clue text, read after Round 2 is cleared...">${escapeHtml(draftFinal.question)}</textarea></div>
+      <div class="field"><label>Final Jeopardy Correct Response</label>
         <input type="text" id="finalA" value="${escapeAttr(draftFinal.answer)}" placeholder="The correct response"></div>
       <button class="btn block" id="createRoom" style="margin-top:10px;">Create Room →</button>
       <button class="btn secondary block" id="saveBoard" style="margin-top:10px;">💾 Save This Board For Later</button>
     </div>
   `;
   document.getElementById('backChoice').onclick = renderBoardChoice;
+  document.getElementById('tabR1').onclick = ()=>{ syncFinalDraft(); renderHostSetup(1); };
+  document.getElementById('tabR2').onclick = ()=>{ syncFinalDraft(); renderHostSetup(2); };
+  function syncFinalDraft(){
+    const fq = document.getElementById('finalQ'); const fa = document.getElementById('finalA');
+    if(fq && fa) draftFinal = {question:fq.value, answer:fa.value};
+  }
   const catWrap = document.getElementById('catEditors');
-  catWrap.innerHTML = draftBoard.map((cat,ci)=>`
+  catWrap.innerHTML = draft.map((cat,ci)=>`
     <div class="cat-editor">
       <div class="field"><label>Category ${ci+1} Name</label>
         <input type="text" data-cat="${ci}" class="catName" value="${escapeAttr(cat.name)}" placeholder="e.g. World Capitals"></div>
       ${cat.clues.map((cl,li)=>`
         <div class="clue-editor-row">
-          <div class="field" style="margin-bottom:0;"><label>${fmt(cl.value)}</label><input type="text" disabled value="${fmt(cl.value)}"></div>
+          <div class="field" style="margin-bottom:0;"><label>${fmt(vals[li])}</label><input type="text" disabled value="${fmt(vals[li])}"></div>
           <div class="field" style="margin-bottom:0;"><label>Clue</label><input type="text" data-cat="${ci}" data-idx="${li}" class="clueText" value="${escapeAttr(cl.text)}" placeholder="Clue text"></div>
           <div class="field" style="margin-bottom:0;"><label>Correct Response</label><input type="text" data-cat="${ci}" data-idx="${li}" class="clueAns" value="${escapeAttr(cl.answer)}" placeholder="Correct response"></div>
           <div class="dd-toggle"><input type="checkbox" data-cat="${ci}" data-idx="${li}" class="ddBox" ${cl.dailyDouble?'checked':''}><span>Daily<br>Double</span></div>
@@ -681,16 +802,20 @@ function renderHostSetup(){
       `).join('')}
     </div>
   `).join('');
-  catWrap.querySelectorAll('.catName').forEach(el=> el.oninput = ()=> draftBoard[el.dataset.cat].name = el.value);
-  catWrap.querySelectorAll('.clueText').forEach(el=> el.oninput = ()=> draftBoard[el.dataset.cat].clues[el.dataset.idx].text = el.value);
-  catWrap.querySelectorAll('.clueAns').forEach(el=> el.oninput = ()=> draftBoard[el.dataset.cat].clues[el.dataset.idx].answer = el.value);
-  catWrap.querySelectorAll('.ddBox').forEach(el=> el.onchange = ()=> draftBoard[el.dataset.cat].clues[el.dataset.idx].dailyDouble = el.checked);
+  catWrap.querySelectorAll('.catName').forEach(el=> el.oninput = ()=> draft[el.dataset.cat].name = el.value);
+  catWrap.querySelectorAll('.clueText').forEach(el=> el.oninput = ()=> draft[el.dataset.cat].clues[el.dataset.idx].text = el.value);
+  catWrap.querySelectorAll('.clueAns').forEach(el=> el.oninput = ()=> draft[el.dataset.cat].clues[el.dataset.idx].answer = el.value);
+  catWrap.querySelectorAll('.ddBox').forEach(el=> el.onchange = ()=> draft[el.dataset.cat].clues[el.dataset.idx].dailyDouble = el.checked);
+
+  function boardIncomplete(){
+    return draftBoardR1.some(c=>!c.name.trim() || c.clues.some(cl=>!cl.text.trim()||!cl.answer.trim()))
+        || draftBoardR2.some(c=>!c.name.trim() || c.clues.some(cl=>!cl.text.trim()||!cl.answer.trim()));
+  }
 
   document.getElementById('createRoom').onclick = async ()=>{
-    const finalQ = document.getElementById('finalQ').value.trim();
-    const finalA = document.getElementById('finalA').value.trim();
-    const emptyClues = draftBoard.some(c=>!c.name.trim() || c.clues.some(cl=>!cl.text.trim()||!cl.answer.trim()));
-    if(emptyClues || !finalQ || !finalA){ alert('Please fill in every category name, clue, correct response, and the final round before starting.'); return; }
+    syncFinalDraft();
+    const finalQ = draftFinal.question.trim(); const finalA = draftFinal.answer.trim();
+    if(boardIncomplete() || !finalQ || !finalA){ alert('Please fill in every category name, clue, and correct response for BOTH rounds, plus Final Jeopardy, before starting.'); return; }
     draftFinal = {question:finalQ, answer:finalA};
     let code=genCode(); let existing=await loadRoom(code); let tries=0;
     while(existing && tries<5){ code=genCode(); existing=await loadRoom(code); tries++; }
@@ -710,13 +835,12 @@ function renderHostSetup(){
     render(state);
   };
   document.getElementById('saveBoard').onclick = async ()=>{
-    const finalQ = document.getElementById('finalQ').value.trim();
-    const finalA = document.getElementById('finalA').value.trim();
-    const emptyClues = draftBoard.some(c=>!c.name.trim() || c.clues.some(cl=>!cl.text.trim()||!cl.answer.trim()));
-    if(emptyClues || !finalQ || !finalA){ alert('Fill in every category, clue, and the final round before saving.'); return; }
+    syncFinalDraft();
+    const finalQ = draftFinal.question.trim(); const finalA = draftFinal.answer.trim();
+    if(boardIncomplete() || !finalQ || !finalA){ alert('Fill in every category, clue, and Final Jeopardy for BOTH rounds before saving.'); return; }
     const title = prompt('Name this board so you can find it later:', "Shayla's Birthday Board");
     if(!title) return;
-    await saveCustomBoard(title.trim(), draftBoard, {question:finalQ, answer:finalA});
+    await saveCustomBoard(title.trim(), draftBoardR1, draftBoardR2, {question:finalQ, answer:finalA});
     alert('Saved! You will see it next time you choose a board.');
   };
 }
@@ -899,25 +1023,27 @@ function renderHostTeamNaming(state){
 }
 
 function renderHostBoard(state){
-  const cats = state.categories;
+  const cats = activeCats(state);
+  const vals = roundValues(state.round);
+  const nextLabel = state.round===1 ? 'Move to Double Jeopardy →' : 'Move to Final Jeopardy →';
   app.innerHTML = `
-    ${topbarRoom(state,'Host')}
+    ${topbarRoom(state, state.round===1 ? 'Host · Round 1' : 'Host · Double Jeopardy')}
     <div class="card">
       <div class="board">
         ${cats.map(c=>`<div class="cat-head">${escapeHtml(c.name)}</div>`).join('')}
-        ${VALUES.map((v,li)=>cats.map((c,ci)=>{
+        ${vals.map((v,li)=>cats.map((c,ci)=>{
           const cl = c.clues[li];
           return `<div class="clue-tile ${cl.answered?'used':''}" data-c="${ci}" data-i="${li}">${cl.answered?'':fmt(cl.value)}</div>`;
         }).join('')).join('')}
       </div>
       ${teamScoreboardHtml(state)}
-      <div class="center" style="margin-top:18px;"><button class="btn secondary" id="toFinal">Skip to Final Round →</button></div>
+      <div class="center" style="margin-top:18px;"><button class="btn secondary" id="toNext">${nextLabel}</button></div>
     </div>
   `;
   app.querySelectorAll('.clue-tile:not(.used)').forEach(el=>{
     el.onclick = ()=>{
       const c=+el.dataset.c, i=+el.dataset.i;
-      const clue=state.categories[c].clues[i], cat=state.categories[c];
+      const clue=activeCats(state)[c].clues[i], cat=activeCats(state)[c];
       const isDD = clue.dailyDouble;
       if(!isDD){
         speakClue(cat.name, clue.value, clue.text, ()=>{
@@ -940,12 +1066,20 @@ function renderHostBoard(state){
       });
     };
   });
-  document.getElementById('toFinal').onclick = ()=> mutate(s=>{ stopSpeaking(); s.phase='final'; initFinalRound(s); });
+  document.getElementById('toNext').onclick = ()=> mutate(s=>{
+    stopSpeaking();
+    if(s.round===1){
+      s.round=2; s.phase='board'; s.activeClue=null; s.buzzedTeam=null; s.buzzedPlayer=null;
+      s.lockedOutTeams=[]; s.earlyLockUntil={}; s.earlyBuzzers={}; s.answerDeadline=null; s.controllingTeam=null;
+    } else {
+      s.phase='final'; initFinalRound(s);
+    }
+  });
 }
 
 function renderHostClue(state){
-  const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
-  const cat = state.categories[state.activeClue.c];
+  const clue = activeCats(state)[state.activeClue.c].clues[state.activeClue.i];
+  const cat = activeCats(state)[state.activeClue.c];
   const isSteal = state.lockedOutTeams.length > 0;
   const effOpen = buzzerEffectivelyOpen(state);
   const secsLeft = state.buzzedTeam && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
@@ -976,12 +1110,12 @@ function renderHostClue(state){
     ${teamScoreboardHtml(state)}
   `;
   document.getElementById('markCorrect').onclick = ()=> mutate(s=>{
-    const cl=s.categories[s.activeClue.c].clues[s.activeClue.i];
+    const cl=activeCats(s)[s.activeClue.c].clues[s.activeClue.i];
     s.teams[s.buzzedTeam].score += cl.value; s.controllingTeam=s.buzzedTeam; cl.answered=true;
     s.phase='board'; s.activeClue=null; s.buzzedTeam=null; s.buzzedPlayer=null; s.buzzerOpen=false; s.lockedOutTeams=[]; s.readingInProgress=false; s.answerDeadline=null;
   });
   document.getElementById('markWrong').onclick = ()=> mutate(s=>{
-    const cl=s.categories[s.activeClue.c].clues[s.activeClue.i];
+    const cl=activeCats(s)[s.activeClue.c].clues[s.activeClue.i];
     s.teams[s.buzzedTeam].score -= cl.value; s.lockedOutTeams.push(s.buzzedTeam); s.buzzedTeam=null; s.buzzedPlayer=null; s.answerDeadline=null;
     const remaining = s.activeTeams.filter(n=>!s.lockedOutTeams.includes(n));
     s.buzzerOpen = remaining.length > 0;
@@ -999,15 +1133,15 @@ function renderHostClue(state){
   };
   document.getElementById('backBoard').onclick = ()=> mutate(s=>{
     stopSpeaking();
-    const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true;
+    const cl=activeCats(s)[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true;
     s.phase='board'; s.activeClue=null; s.buzzedTeam=null; s.buzzedPlayer=null; s.buzzerOpen=false; s.lockedOutTeams=[]; s.readingInProgress=false; s.answerDeadline=null;
   });
 }
 
 let lastSpokenDD = null;
 function renderHostDailyDouble(state){
-  const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
-  const cat = state.categories[state.activeClue.c];
+  const clue = activeCats(state)[state.activeClue.c].clues[state.activeClue.i];
+  const cat = activeCats(state)[state.activeClue.c];
   const actives = state.activeTeams;
   const wagerTeam = state.ddWager.team;
   const ddKey = `${state.activeClue.c}-${state.activeClue.i}`;
@@ -1057,7 +1191,7 @@ function renderHostDailyDouble(state){
   const ddReveal = document.getElementById('ddReveal');
   if(ddReveal) ddReveal.onclick = ()=> mutate(s=>{ s.revealAnswer=true; });
   document.getElementById('backBoard').onclick = ()=> mutate(s=>{ stopSpeaking(); finishDD(s); });
-  function finishDD(s){ const cl=s.categories[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true; s.phase='board'; s.activeClue=null; s.ddWager=null; s.ddStage=null; s.revealAnswer=false; s.answerDeadline=null; }
+  function finishDD(s){ const cl=activeCats(s)[s.activeClue.c].clues[s.activeClue.i]; cl.answered=true; s.phase='board'; s.activeClue=null; s.ddWager=null; s.ddStage=null; s.revealAnswer=false; s.answerDeadline=null; }
 }
 
 function teamCaptainStatusHtml(state, n){
@@ -1236,11 +1370,12 @@ function renderPlayerTeamNaming(state){
 }
 
 function renderPlayerBoard(state){
-  const cats = state.categories;
-  app.innerHTML = `${topbarRoom(state,myName)}<div class="card"><div class="board"></div></div>`;
+  const cats = activeCats(state);
+  const vals = roundValues(state.round);
+  app.innerHTML = `${topbarRoom(state, state.round===1?myName:`${myName} · Double Jeopardy`)}<div class="card"><div class="board"></div></div>`;
   const boardEl = app.querySelector('.board');
   boardEl.innerHTML = cats.map(c=>`<div class="cat-head">${escapeHtml(c.name)}</div>`).join('') +
-    VALUES.map((v,li)=>cats.map(c=>{ const cl=c.clues[li]; return `<div class="clue-tile used" style="cursor:default;">${cl.answered?'':fmt(cl.value)}</div>`; }).join('')).join('');
+    vals.map((v,li)=>cats.map(c=>{ const cl=c.clues[li]; return `<div class="clue-tile used" style="cursor:default;">${cl.answered?'':fmt(cl.value)}</div>`; }).join('')).join('');
   const card = app.querySelector('.card');
   const note = document.createElement('div'); note.className='hint center'; note.style.marginTop='14px'; note.textContent='Waiting for the host to pick a clue…';
   card.appendChild(note);
@@ -1276,8 +1411,8 @@ function computeBuzzState(state, myTeam, myName){
 }
 
 function renderPlayerClue(state){
-  const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
-  const cat = state.categories[state.activeClue.c];
+  const clue = activeCats(state)[state.activeClue.c].clues[state.activeClue.i];
+  const cat = activeCats(state)[state.activeClue.c];
   const myTeam = state.players[myName].team;
   const bs = computeBuzzState(state, myTeam, myName);
   const secsLeft = state.buzzedTeam===myTeam && state.buzzedPlayer===myName && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
@@ -1327,8 +1462,8 @@ function renderPlayerClue(state){
 }
 
 function renderPlayerDailyDouble(state){
-  const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
-  const cat = state.categories[state.activeClue.c];
+  const clue = activeCats(state)[state.activeClue.c].clues[state.activeClue.i];
+  const cat = activeCats(state)[state.activeClue.c];
   const myTeam = state.players[myName].team;
   const isWagerer = state.ddWager && state.ddWager.team === myTeam;
   const teamScore = state.teams[myTeam].score;
@@ -1556,21 +1691,22 @@ function renderDisplayWaiting(state){
   `;
 }
 function renderDisplayBoard(state){
-  const cats = state.categories;
+  const cats = activeCats(state);
+  const vals = roundValues(state.round);
   app.innerHTML = `
-    ${topbarRoom(state,'Display')}
+    ${topbarRoom(state, state.round===1?'Display · Round 1':'Display · Double Jeopardy')}
     <div class="card">
       <div class="board">
         ${cats.map(c=>`<div class="cat-head">${escapeHtml(c.name)}</div>`).join('')}
-        ${VALUES.map((v,li)=>cats.map((c)=>{ const cl=c.clues[li]; return `<div class="clue-tile used" style="cursor:default;">${cl.answered?'':fmt(cl.value)}</div>`; }).join('')).join('')}
+        ${vals.map((v,li)=>cats.map((c)=>{ const cl=c.clues[li]; return `<div class="clue-tile used" style="cursor:default;">${cl.answered?'':fmt(cl.value)}</div>`; }).join('')).join('')}
       </div>
       ${teamScoreboardHtml(state)}
     </div>
   `;
 }
 function renderDisplayClue(state){
-  const clue = state.categories[state.activeClue.c].clues[state.activeClue.i];
-  const cat = state.categories[state.activeClue.c];
+  const clue = activeCats(state)[state.activeClue.c].clues[state.activeClue.i];
+  const cat = activeCats(state)[state.activeClue.c];
   const isSteal = state.lockedOutTeams.length > 0;
   const secsLeft = state.buzzedTeam && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
   const noTeamsLeft = state.activeTeams.length>0 && state.activeTeams.every(n=>state.lockedOutTeams.includes(n));
@@ -1591,7 +1727,7 @@ function renderDisplayClue(state){
   `;
 }
 function renderDisplayDailyDouble(state){
-  const cat = state.categories[state.activeClue.c];
+  const cat = activeCats(state)[state.activeClue.c];
   const wagerTeam = state.ddWager.team;
   app.innerHTML = `
     ${topbarRoom(state,'Display')}
