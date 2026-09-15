@@ -144,6 +144,98 @@ const app = document.getElementById('app');
 function mk(v,text,answer,dd){ return {value:v, text, answer, dailyDouble:!!dd, revealed:false, answered:false}; }
 const STANDARD_PACKS = [
   {
+    id:'shaylabday', title:"Shayla's Birthday Board", blurb:"Custom-built for Shayla's birthday — Harry Potter, murder mysteries, the Blue Jays, dogs, and more.",
+    finalQ:{question:"This was the name of Selena's family band, which she performed with throughout her career before her death in 1995.", answer:"What is Selena y Los Dinos?"},
+    round1:[
+      {name:'Passport Ready', clues:[
+        mk(200,"This European country is famously shaped like a boot.","What is Italy?"),
+        mk(400,"This country is home to the Acropolis and the Parthenon, overlooking its capital, Athens.","What is Greece?"),
+        mk(600,"This country's flag is green, white, and orange, and its capital is Dublin.","What is Ireland?"),
+        mk(800,"This East African country is home to Mount Kilimanjaro.","What is Tanzania?"),
+        mk(1000,"This East Asian country's capital is Seoul — Shayla hasn't been yet, but it's at the top of her list.","What is South Korea?")
+      ]},
+      {name:'Paws for Shayla', clues:[
+        mk(200,"This is the term used for a baby dog.","What is a puppy?"),
+        mk(400,"Because of Shayla's pet-sitting business, it's common to find several extra dogs staying at her house at once.","What is dog boarding?"),
+        mk(600,"This toy breed, known for long ears and a gentle temperament, is the breed of Calin and Shayla's dog, Herschel.","What is a Cavalier King Charles Spaniel?"),
+        mk(800,"This is the name of the local coffee shop Shayla walks her boarding dogs to.","What is Hunters Coffee Shop?"),
+        mk(1000,"This low-to-the-ground German breed was originally bred to hunt badgers.","What is a Dachshund?")
+      ]},
+      {name:"Shayla's Kitchen", clues:[
+        mk(200,"This Mexican dish wraps meat, beans, or veggies in a soft or crispy tortilla.","What is a taco?"),
+        mk(400,"This Vietnamese noodle soup is typically served in a beef or chicken broth.","What is pho?"),
+        mk(600,"This Korean dining style lets you grill meat right at your own table.","What is Korean BBQ?"),
+        mk(800,"This Italian sauce combines tomatoes, garlic, and basil.","What is marinara (or pomodoro)?"),
+        mk(1000,"This French cooking technique involves slowly cooking food in a small amount of liquid in a covered pot.","What is braising?")
+      ]},
+      {name:'Blue Jays Baseball', clues:[
+        mk(200,"This is the city home to the Blue Jays.","What is Toronto?"),
+        mk(400,"This former Blue Jays center fielder earned the nickname 'Superman' for his diving, highlight-reel catches.","Who is Kevin Pillar?"),
+        mk(600,"This longtime Blue Jays pitcher's signature pitch is the splitter — he was traded away from Toronto in 2026.","Who is Kevin Gausman?", true),
+        mk(800,"This Blue Jays infielder set the all-time MLB record for most hits in a single postseason during the 2025 playoffs.","Who is Ernie Clement?"),
+        mk(1000,"This Blue Jay hit the series-winning walk-off home run in Game 6 of the 1993 World Series, clinching back-to-back titles.","Who is Joe Carter?")
+      ]},
+      {name:'Wild Favorites', clues:[
+        mk(200,"This is the largest land animal on Earth, found roaming the African savanna.","What is the elephant?"),
+        mk(400,"This playful marine mammal is known for cracking open shellfish on its belly using a rock as a tool.","What is the sea otter?"),
+        mk(600,"This is the largest animal to have ever lived — swimming alongside one is at the top of Shayla's bucket list.","What is the blue whale?"),
+        mk(800,"This is one of the smallest antelope species in the world, about the size of a rabbit, found in East African bushland.","What is a dik-dik?"),
+        mk(1000,"This critically endangered great ape, found in the misty mountains of Central Africa, is the other item at the top of Shayla's bucket list.","What is the mountain gorilla?")
+      ]},
+      {name:'On Repeat', clues:[
+        mk(200,"This Barbadian singer is behind hits like 'Umbrella' and 'Diamonds.'","Who is Rihanna?"),
+        mk(400,"This former boy band member went solo with hits like 'Watermelon Sugar' and 'As It Was.'","Who is Harry Styles?"),
+        mk(600,"This rapper-singer is behind hits like 'Circles' and 'Sunflower.'","Who is Post Malone?"),
+        mk(800,"This soul-pop singer is known for his powerhouse voice on the viral hit 'Lose Control.'","Who is Teddy Swims?"),
+        mk(1000,"This pop-rock trio of brothers is known for hits like 'Sucker' and 'Burnin' Up.'","Who are the Jonas Brothers?")
+      ]}
+    ],
+    round2:[
+      {name:'The Wizarding World', clues:[
+        mk(400,"This magical sorting device, an old and battered witch's hat, decides which of the four houses each new Hogwarts student belongs to.","What is the Sorting Hat?"),
+        mk(800,"This spell, cast with 'Expecto Patronum,' conjures a guardian to ward off Dementors.","What is the Patronus Charm?"),
+        mk(1200,"This hidden Hogwarts room appears only when someone truly needs it, and hosted Dumbledore's Army's secret meetings.","What is the Room of Requirement?"),
+        mk(1600,"This is the incantation for the Killing Curse, one of the three Unforgivable Curses.","What is Avada Kedavra?"),
+        mk(2000,"This Harry Potter-themed YouTube channel, run by two brothers, is one of Shayla's regular watches.","What is SuperCarlinBrothers?", true)
+      ]},
+      {name:'Whodunnit?', clues:[
+        mk(400,"This British author, often called the 'Queen of Crime,' wrote Murder on the Orient Express.","Who is Agatha Christie?"),
+        mk(800,"This 2019 mystery film stars Daniel Craig as detective Benoit Blanc.","What is Knives Out?"),
+        mk(1200,"This crime drama follows LAPD Deputy Chief Brenda Leigh Johnson solving murders.","What is The Closer?"),
+        mk(1600,"This long-running drama follows the FBI's Behavioral Analysis Unit profiling serial killers.","What is Criminal Minds?"),
+        mk(2000,"This mystery novel series by Richard Osman follows a group of retirees solving cold cases.","What is The Thursday Murder Club?")
+      ]},
+      {name:'Y2K Rom-Coms', clues:[
+        mk(400,'In this 2004 film, 13-year-old Jenna Rink wishes to be "thirty, flirty, and thriving."',"What is 13 Going on 30?"),
+        mk(800,"In this film, Amanda Bynes disguises herself as her twin brother to play boys' soccer.","What is She's the Man?"),
+        mk(1200,"In this rom-com, Sandra Bullock's character fake-marries her assistant to avoid deportation.","What is The Proposal?", true),
+        mk(1600,"In this film, two women swap homes for the holidays and both find unexpected romance.","What is The Holiday?"),
+        mk(2000,"This film follows an American teen who discovers she's secretly heir to a European throne.","What is The Princess Diaries?")
+      ]},
+      {name:'Musicals & Biopics', clues:[
+        mk(400,"This 2018 Freddie Mercury biopic shares its title with a classic Queen song.","What is Bohemian Rhapsody?"),
+        mk(800,"This musical film follows a Tejano singing star whose life was cut short in 1995.","What is Selena?"),
+        mk(1200,"This Aretha Franklin biopic starred Jennifer Hudson as the Queen of Soul.","What is Respect?"),
+        mk(1600,"This musical, based on the Alice Walker novel, follows Celie's life in the early 20th-century South.","What is The Color Purple?"),
+        mk(2000,"This is the title of the show-stopping song Elphaba sings at the end of Act One as she flies off on her broomstick, defiantly embracing her powers.",'What is "Defying Gravity"?')
+      ]},
+      {name:"Shayla's Favorites", clues:[
+        mk(400,"This 1997 film follows Jack and Rose aboard a doomed ocean liner.","What is Titanic?"),
+        mk(800,"This Tom Hanks film follows a man with a low IQ who unwittingly influences major historic events.","What is Forrest Gump?"),
+        mk(1200,"In this dystopian series, tributes from twelve districts fight to the death in a televised arena under the Capitol's watch.","What is The Hunger Games?"),
+        mk(1600,"In this film, twin sisters separated at birth meet at summer camp and swap places to reunite their parents.","What is The Parent Trap?"),
+        mk(2000,"In this Apple TV+ series, an American football coach manages a British soccer team despite knowing nothing about the sport.","What is Ted Lasso?")
+      ]},
+      {name:'Country Roads', clues:[
+        mk(400,"In this Dolly Parton classic, the narrator begs another woman, using the title as her name, not to steal her man.",'What is "Jolene"?'),
+        mk(800,"In this Carrie Underwood hit, a scorned woman takes a baseball bat to her cheating boyfriend's prized truck.",'What is "Before He Cheats"?'),
+        mk(1200,"In this Garth Brooks anthem, the narrator crashes an ex's wedding reception, only to end up happily celebrating with cheap beer at a bar instead.",'What is "Friends in Low Places"?'),
+        mk(1600,"This city, nicknamed 'Music City,' is the heart of the country music industry.","What is Nashville?"),
+        mk(2000,"This song, popularized by Darius Rucker's cover, describes hitchhiking from Roanoke to Johnson City to see a loved one.",'What is "Wagon Wheel"?')
+      ]}
+    ]
+  },
+  {
     id:'pack1', title:'Classic Trivia Night', blurb:'A full two-round game — geography, science, movies, history, capitals, literature, and more.',
     finalQ:{question:"This South American capital sits over 11,000 feet above sea level, making it one of the highest capital cities in the world.", answer:"What is La Paz, Bolivia?"},
     round1:[
