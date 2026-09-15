@@ -3165,6 +3165,7 @@ function renderHostClue(state){
 }
 
 let lastSpokenDD = null;
+let finalGradingTriggered = false;
 function renderHostDailyDouble(state){
   const clue = activeCats(state)[state.activeClue.c].clues[state.activeClue.i];
   const cat = activeCats(state)[state.activeClue.c];
@@ -3234,6 +3235,11 @@ function renderHostFinal(state){
   const answersIn = actives.filter(n=>f.answers[n]!==undefined);
   const allWagersLocked = actives.every(n=>f.wagers[n]!==undefined);
   const secsLeft = f.stage==='answer' && f.answerDeadline ? Math.max(0, Math.ceil((f.answerDeadline-Date.now())/1000)) : null;
+  if(f.stage==='select_captain' || f.stage==='wager') finalGradingTriggered = false;
+  if(f.stage==='answer' && answersIn.length>=actives.length && !finalGradingTriggered){
+    finalGradingTriggered = true;
+    mutate(s=>{ if(s.final.stage==='answer') s.final.stage='grading'; });
+  }
   app.innerHTML = `
     ${topbarRoom(state,'Host · Final Round')}
     <div class="card">
@@ -3260,9 +3266,7 @@ function renderHostFinal(state){
         <button class="btn block" id="revealFinal" style="margin-top:14px;" ${!allWagersLocked?'disabled':''}>Reveal Clue to Players →</button>
       ` : ''}
       ${f.stage==='reading' ? `<div class="center" style="margin-top:14px;"><button class="btn secondary" id="skipFinalReading">Skip Reading / Start Timer Now</button></div>` : ''}
-      ${f.stage==='answer' ? `<div class="hint" style="margin:14px 0;">Captains answered: ${answersIn.length}/${actives.length}</div>
-        ${answersIn.length>=actives.length ? `<div class="reading-status" style="color:var(--teal);margin-bottom:10px;">✅ All teams have answered — ready to grade!</div>` : ''}
-        <button class="btn block" id="startGrading" ${answersIn.length<actives.length?'disabled':''}>Start Grading →</button>` : ''}
+      ${f.stage==='answer' ? `<div class="hint" style="margin:14px 0;">Captains answered: ${answersIn.length}/${actives.length}${answersIn.length>=actives.length ? ' — moving to grading…' : ''}</div>` : ''}
       ${f.stage==='grading' ? `<div class="judge-hint">💡 Doesn't need to be exact phrasing — judge on substance.</div>
         <div class="stack" style="margin-top:10px;">
           ${actives.map(n=>`<div class="kv" style="align-items:center;">
@@ -3290,8 +3294,6 @@ function renderHostFinal(state){
     playSoothingTimer(30);
     mutate(s=>{ if(s.final.stage==='reading'){ s.final.stage='answer'; s.final.answerDeadline=Date.now()+30000; } });
   };
-  const startGrading = document.getElementById('startGrading');
-  if(startGrading) startGrading.onclick = ()=> mutate(s=>{ s.final.stage='grading'; });
   app.querySelectorAll('[data-v]').forEach(btn=>{
     btn.onclick = ()=> mutate(s=>{ const n=+btn.dataset.n, v=btn.dataset.v==='1'; s.final.graded[n]=v; s.teams[n].score += v ? s.final.wagers[n] : -s.final.wagers[n]; });
   });
