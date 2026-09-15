@@ -2500,10 +2500,14 @@ function speakClue(categoryName, value, clueText, onDone){
 function testVoice(){
   speakClue('', '', "This is a quick sound check. If you can hear this clearly, your speakers are ready for game night.", ()=>{});
 }
+let soothingTimerId = null;
+let soothingTimerCtx = null;
 function playSoothingTimer(durationSec){
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if(!Ctx) return;
+  stopSoothingTimer();
   const ctx = new Ctx();
+  soothingTimerCtx = ctx;
   const notes = [523.25, 659.25, 523.25, 440.0]; // a gentle, generic 4-note loop — not the copyrighted theme
   let step = 0;
   const stepMs = 900;
@@ -2524,6 +2528,11 @@ function playSoothingTimer(durationSec){
     }catch(e){}
     step++;
   }, stepMs);
+  soothingTimerId = id;
+}
+function stopSoothingTimer(){
+  if(soothingTimerId){ clearInterval(soothingTimerId); soothingTimerId=null; }
+  if(soothingTimerCtx){ try{ soothingTimerCtx.close(); }catch(e){} soothingTimerCtx=null; }
 }
 function buzzerEffectivelyOpen(state){
   return !!state.buzzerOpen;
@@ -3224,6 +3233,7 @@ function renderHostFinal(state){
   if(f.stage==='select_captain' || f.stage==='wager') finalGradingTriggered = false;
   if(f.stage==='answer' && answersIn.length>=actives.length && !finalGradingTriggered){
     finalGradingTriggered = true;
+    stopSoothingTimer();
     mutate(s=>{ if(s.final.stage==='answer') s.final.stage='grading'; });
   }
   app.innerHTML = `
@@ -3509,14 +3519,17 @@ function renderPlayerDailyDouble(state){
     ${teamScoreboardHtml(state)}
   `;
   const betItAll = document.getElementById('betItAll');
-  if(betItAll) betItAll.onclick = ()=>{ document.getElementById('wagerAmt').value = Math.max(minWager, teamScore); };
+  if(betItAll) betItAll.onclick = ()=>{ document.getElementById('wagerAmt').value = Math.max(0, teamScore); };
   const submitWager = document.getElementById('submitWager');
   if(submitWager) submitWager.onclick = ()=>{
-    const amt = Math.max(minWager, Math.min(maxWager, +document.getElementById('wagerAmt').value || minWager));
+    const raw = +document.getElementById('wagerAmt').value;
+    const trueDDAmt = Math.max(0, teamScore);
+    const isTrue = raw === trueDDAmt;
+    const amt = isTrue ? trueDDAmt : Math.max(minWager, Math.min(maxWager, raw || minWager));
     mutate(s=>{
       if(s.ddWager.amount != null) return;
       s.ddWager.amount = amt;
-      s.ddWager.trueDD = (amt === Math.max(0, s.teams[myTeam].score) && amt > 0);
+      s.ddWager.trueDD = isTrue;
       s.ddStage = 'reveal';
     });
   };
