@@ -2745,7 +2745,7 @@ async function renderBoardChoice(){
     <div class="stack">
       <div class="pack-card" id="goCustom"><h4>✏️ Build a Custom Board</h4><div class="hint">Write your own Round 1 and Round 2 categories and clues — perfect for a themed game like a birthday round.</div></div>
       ${STANDARD_PACKS.map(p=>`
-        <div class="pack-card" data-pack="${p.id}"><h4>${p.id==='shaylabday'?'❤️':'📦'} ${escapeHtml(p.title)}</h4><div class="hint">${escapeHtml(p.blurb)}</div></div>
+        <div class="pack-card" data-pack="${p.id}"><h4>${p.id==='shaylabday'?'❤️':(/^g\d+$/.test(p.id)?'🎲':'📦')} ${escapeHtml(p.title)}</h4><div class="hint">${escapeHtml(p.blurb)}</div></div>
       `).join('')}
       <div id="savedBoardsWrap"><div class="hint center">Loading your saved boards…</div></div>
     </div>
