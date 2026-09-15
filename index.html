@@ -144,6 +144,98 @@ const app = document.getElementById('app');
 function mk(v,text,answer,dd){ return {value:v, text, answer, dailyDouble:!!dd, revealed:false, answered:false}; }
 const STANDARD_PACKS = [
   {
+    id:'y2k', title:'2000s Throwback', blurb:'A full two-round game built for the millennials in the room — Y2K music, reality TV, gadgets, Disney Channel, and more.',
+    finalQ:{question:"This social network, launched in 2004 and originally limited to college students, became the dominant platform of the 2000s.", answer:"What is Facebook?"},
+    round1:[
+      {name:'Y2K Music', clues:[
+        mk(200,"This boy band's 2000 album No Strings Attached sold over 2 million copies in its first week.","What is *NSYNC?"),
+        mk(400,"This singer's 2000 hit 'Oops!... I Did It Again' cemented her as the 'Princess of Pop.'","Who is Britney Spears?"),
+        mk(600,"This rapper's 2000 hit 'The Real Slim Shady' became one of his signature songs.","Who is Eminem?"),
+        mk(800,"This Houston girl group topped charts in the 2000s with hits like 'Say My Name' and 'Survivor.'","What is Destiny's Child?"),
+        mk(1000,"This Canadian singer's 2002 debut single 'Complicated' made her a pop-punk icon.","Who is Avril Lavigne?")
+      ]},
+      {name:'2000s Movies', clues:[
+        mk(200,"This 2003 film concluded a trilogy about a fellowship trying to destroy a powerful ring.","What is The Lord of the Rings (The Return of the King)?"),
+        mk(400,"This 2004 Pixar film follows a family of undercover superheroes.","What is The Incredibles?"),
+        mk(600,"This 2001 film series began with a boy discovering he's a wizard, based on books by J.K. Rowling.","What is Harry Potter?"),
+        mk(800,"This 2008 film introduced Tony Stark to the big screen, launching the Marvel Cinematic Universe.","What is Iron Man?"),
+        mk(1000,"This 2001 film follows a mathematician struggling with schizophrenia, played by Russell Crowe.","What is A Beautiful Mind?")
+      ]},
+      {name:'Reality TV Boom', clues:[
+        mk(200,"This singing competition, hosted by Ryan Seacrest, launched Kelly Clarkson's career in 2002.","What is American Idol?"),
+        mk(400,"This CBS show strands contestants on an island to compete for a cash prize, debuting in 2000.","What is Survivor?"),
+        mk(600,"This MTV series follows young adults sharing a house, becoming a genre-defining reality format.","What is The Real World?"),
+        mk(800,"This ABC dating competition, debuting in 2002, has one contestant handing out roses to narrow down suitors.","What is The Bachelor?"),
+        mk(1000,"This NBC reality competition, hosted by a real estate mogul, had contestants compete for a corporate job, with a weekly firing.","What is The Apprentice?")
+      ]},
+      {name:'Gadgets & Tech', clues:[
+        mk(200,"This Apple device, launched in 2001, let you carry '1,000 songs in your pocket.'","What is the iPod?"),
+        mk(400,"This social network, launched in 2003, let users decorate profiles with music and graphics before Facebook took over.","What is Myspace?"),
+        mk(600,"This flip-style phone, released in 2004, became one of the best-selling phones of all time.","What is the Motorola RAZR?", true),
+        mk(800,"This Nintendo handheld, released in 2004, featured two screens and a stylus.","What is the Nintendo DS?"),
+        mk(1000,"This Apple product, launched in 2007, combined a phone, iPod, and internet device into one.","What is the iPhone?")
+      ]},
+      {name:'2000s Fashion & Trends', clues:[
+        mk(200,"These low-cut denim bottoms, worn well below the natural waistline, defined 2000s fashion.","What are low-rise jeans?"),
+        mk(400,"This small, tinted eyewear style, often worn indoors by celebrities, was a hallmark 2000s trend.","What are mini sunglasses?"),
+        mk(600,"This colorful rubber bracelet trend, often stamped with words or causes, became a mid-2000s playground craze.","What are gel bracelets (or Livestrong-style bands)?"),
+        mk(800,"This trucker-style hat, made popular by brands like Von Dutch, was a must-have 2000s accessory.","What is a trucker hat?"),
+        mk(1000,"This Juicy Couture staple, a matching zip-up hoodie and sweatpants set, became a celebrity off-duty uniform.","What is a velour tracksuit?")
+      ]},
+      {name:'2000s Cartoons', clues:[
+        mk(200,"This character lives in a pineapple under the sea in his self-titled Nickelodeon show.","Who is SpongeBob SquarePants?"),
+        mk(400,"This Nickelodeon show follows a boy genius who builds inventions in his backyard clubhouse.","Who is Jimmy Neutron?"),
+        mk(600,"This Cartoon Network show follows three super-powered kindergarteners named Blossom, Bubbles, and Buttercup.","What is The Powerpuff Girls?"),
+        mk(800,"This Nickelodeon fantasy series follows Aang, who must master four elements to save the world.","What is Avatar: The Last Airbender?"),
+        mk(1000,"This Cartoon Network show follows a boy who fights monsters using a magical watch that lets him transform into aliens.","What is Ben 10?")
+      ]}
+    ],
+    round2:[
+      {name:'2000s Sitcoms', clues:[
+        mk(400,"This NBC sitcom, set at a paper company in Scranton, PA, premiered in 2005 as a mockumentary.","What is The Office?"),
+        mk(800,"This CBS sitcom follows a group of friends navigating dating and careers in New York, narrated by an older version of the main character.","What is How I Met Your Mother?"),
+        mk(1200,"This sitcom follows the wealthy-turned-broke Bluth family, narrated by Ron Howard.","What is Arrested Development?"),
+        mk(1600,"This NBC sitcom follows a small-time crook who starts making things right after winning the lottery.","What is My Name Is Earl?"),
+        mk(2000,"This CBS sitcom about two socially awkward physicists and their neighbor premiered in 2007.","What is The Big Bang Theory?")
+      ]},
+      {name:'2000s Sports Moments', clues:[
+        mk(400,"This cyclist won a record seven consecutive Tour de France titles from 1999 to 2005, later stripped for doping.","Who is Lance Armstrong?"),
+        mk(800,"This golfer won the 2000 U.S. Open by a record 15 strokes, part of his historic 'Tiger Slam.'","Who is Tiger Woods?"),
+        mk(1200,"This swimmer won a record eight gold medals at a single Olympics, at the 2008 Beijing Games.","Who is Michael Phelps?"),
+        mk(1600,"This New England Patriots quarterback won his first Super Bowl in the 2001 season, launching a legendary career.","Who is Tom Brady?"),
+        mk(2000,"This gymnast became the first American woman to win the Olympic all-around gold at a fully attended Games, in Athens 2004.","Who is Carly Patterson?")
+      ]},
+      {name:'2000s Video Games', clues:[
+        mk(400,"This life simulation game series, where players build homes and control virtual people, released The Sims 2 in 2004.","What is The Sims?"),
+        mk(800,"This Rockstar game, set in a fictional version of 1980s Miami, released Vice City in 2002.","What is Grand Theft Auto?"),
+        mk(1200,"This Nintendo console, released in 2006, used motion-sensing controllers to get players moving.","What is the Wii?"),
+        mk(1600,"This rhythm game series had players strumming a plastic controller shaped like a guitar, debuting in 2005.","What is Guitar Hero?", true),
+        mk(2000,"This massively multiplayer online game, released in 2004, became the best-selling MMO of all time.","What is World of Warcraft?")
+      ]},
+      {name:'Internet & Early Social Media', clues:[
+        mk(400,"This video-sharing site, founded in 2005, popularized the phrase 'Broadcast Yourself.'","What is YouTube?"),
+        mk(800,"This search engine, founded in 1998, dominated the 2000s and became a household verb.","What is Google?"),
+        mk(1200,"This online encyclopedia, launched in 2001, can be edited by anyone.","What is Wikipedia?"),
+        mk(1600,"This microblogging platform, launched in 2006, originally limited posts to 140 characters.","What is Twitter?"),
+        mk(2000,"This site, launched in 2004 as 'TheFacebook,' was originally exclusive to Harvard students.","What is Facebook?")
+      ]},
+      {name:'2000s One-Hit Wonders', clues:[
+        mk(400,"This Italian dance-pop group's only major U.S. hit, 'Blue (Da Ba Dee),' dominated radio in 2000.","Who is Eiffel 65?"),
+        mk(800,"This group's 2000 hit 'Who Let the Dogs Out' became an inescapable sports-arena anthem.","Who is Baha Men?"),
+        mk(1200,"This band's 2001 hit 'Hanging by a Moment' topped the Billboard Hot 100 for eight weeks.","Who is Lifehouse?"),
+        mk(1600,"This 2005 hit 'Hollaback Girl' was known for spelling out a key word in its own title.","Who is Gwen Stefani?"),
+        mk(2000,"This 2000 song 'Butterfly' was this rap-rock group's only major hit before fading from the spotlight.","Who is Crazy Town?")
+      ]},
+      {name:'Disney Channel Originals', clues:[
+        mk(400,"This 2002 Disney Channel Original Movie stars Hilary Duff as a rebellious teen sent to military school.","What is Cadet Kelly?"),
+        mk(800,"This 2006 movie musical follows basketball star Troy and brainy Gabriella auditioning for their school musical.","What is High School Musical?"),
+        mk(1200,"This 2005 movie follows four friends who share a single pair of jeans that fits them all perfectly.","What is The Sisterhood of the Traveling Pants?", true),
+        mk(1600,"This Disney Channel series follows twin brothers living a hijinks-filled life at a Boston hotel.","What is The Suite Life of Zack & Cody?"),
+        mk(2000,"This 2003 Lindsay Lohan film is a modern remake of a 1976 body-swap comedy.","What is Freaky Friday?")
+      ]}
+    ]
+  },
+  {
     id:'shaylabday', title:"Shayla's Birthday Board", blurb:"Custom-built for Shayla's birthday — Harry Potter, murder mysteries, the Blue Jays, dogs, and more.",
     finalQ:{question:"This was the name of Selena's family band, which she performed with throughout her career before her death in 1995.", answer:"What is Selena y Los Dinos?"},
     round1:[
