@@ -144,6 +144,1846 @@ const app = document.getElementById('app');
 function mk(v,text,answer,dd){ return {value:v, text, answer, dailyDouble:!!dd, revealed:false, answered:false}; }
 const STANDARD_PACKS = [
   {
+    id:'g11', title:'Nostalgia Wars: 90s vs. 2000s', blurb:'Saturday morning cartoons, mall culture, dial-up internet, teen movies, and throwback tech.',
+    finalQ:{question:"This website, launched in 2005, began as a place to upload and share online video and was purchased by Google the following year.", answer:"What is YouTube?"},
+    round1:[
+      {name:'Saturday Morning', clues:[
+        mk(200,"This yellow sponge first appeared on Nickelodeon in 1999.","Who is SpongeBob SquarePants?"),
+        mk(400,"Tommy, Chuckie and Angelica were the diapered stars of this Nickelodeon cartoon.","What is Rugrats?"),
+        mk(600,"Arnold lived with his grandparents in a city boarding house in this animated series.","What is Hey Arnold!?"),
+        mk(800,"This Cartoon Network series featured Blossom, Bubbles and Buttercup.","What is The Powerpuff Girls?"),
+        mk(1000,"Ash Ketchum began his quest to catch them all in this franchise's animated series.","What is Pokémon?")
+      ]},
+      {name:'Mall Culture', clues:[
+        mk(200,"This chain's stores were famous for graphic tees, band merch and a goth-friendly aesthetic.","What is Hot Topic?"),
+        mk(400,"This accessories chain made ear piercing a rite of passage for many tweens.","What is Claire's?"),
+        mk(600,"This music retailer let shoppers browse CDs while wearing oversized headphones at listening stations.","What is HMV?"),
+        mk(800,"This body-care retailer became synonymous with scents like Cucumber Melon and Warm Vanilla Sugar.","What is Bath & Body Works?"),
+        mk(1000,"This California-inspired clothing retailer's bird logo and dark storefronts defined the mid-2000s mall look.","What is Hollister?")
+      ]},
+      {name:'Dial-Up Days', clues:[
+        mk(200,"This sound meant your computer was trying to connect to the internet through a phone line.","What is a dial-up modem?"),
+        mk(400,"This Microsoft chat service was commonly shortened to MSN Messenger.","What is MSN Messenger?"),
+        mk(600,"This website let users build pages with glitter GIFs, guestbooks and often eye-searing backgrounds.","What is GeoCities?"),
+        mk(800,"This early blogging platform made 'online journal' culture mainstream among teens.","What is LiveJournal?", true),
+        mk(1000,"This search engine's name became a verb so quickly that it reshaped how people described finding information online.","What is Google?")
+      ]},
+      {name:'Teen Movies', clues:[
+        mk(200,"Cher Horowitz gives a makeover to Tai in this 1995 comedy.","What is Clueless?"),
+        mk(400,"This 1999 comedy stars Julia Stiles and Heath Ledger in a modernized Shakespeare story.","What is 10 Things I Hate About You?"),
+        mk(600,"Reese Witherspoon's Elle Woods heads to Harvard Law in this 2001 comedy.","What is Legally Blonde?"),
+        mk(800,"Lindsay Lohan plays twins Hallie and Annie in this 1998 remake.","What is The Parent Trap?"),
+        mk(1000,"Amanda Bynes plays Daphne, an American teen searching for her British father, in this 2003 film.","What is What a Girl Wants?")
+      ]},
+      {name:'Throwback Tech', clues:[
+        mk(200,"This portable virtual pet lived on a keychain-sized egg-shaped device.","What is a Tamagotchi?"),
+        mk(400,"Before smartphones, this Nokia handset was famous for Snake and near-indestructibility.","What is the Nokia 3310?"),
+        mk(600,"This flip phone became a fashion object after its 2004 release.","What is the Motorola Razr?"),
+        mk(800,"Nintendo's dual-screen handheld launched in North America in 2004 under these two letters.","What is the DS?"),
+        mk(1000,"This Microsoft portable media player was launched to compete with the iPod but discontinued in 2011.","What is the Zune?")
+      ]},
+      {name:'Who Sang It?', clues:[
+        mk(200,"'Genie in a Bottle' launched this singer's solo pop career.","Who is Christina Aguilera?"),
+        mk(400,"'Complicated' introduced the world to this Canadian singer in 2002.","Who is Avril Lavigne?"),
+        mk(600,"'Yeah!' was a massive 2004 hit for this R&B singer.","Who is Usher?"),
+        mk(800,"'Pocketful of Sunshine' was sung by this British-born pop singer.","Who is Natasha Bedingfield?"),
+        mk(1000,"'A Thousand Miles' is the signature piano-driven hit of this singer-songwriter.","Who is Vanessa Carlton?")
+      ]}
+    ],
+    round2:[
+      {name:'Boy Bands & Girl Groups', clues:[
+        mk(400,"Nick, Brian, AJ, Howie and Kevin made up this group.","Who are the Backstreet Boys?"),
+        mk(800,"'No Scrubs' was a hit for this trio.","Who are TLC?"),
+        mk(1200,"This British girl group told listeners what they really, really wanted.","Who are the Spice Girls?"),
+        mk(1600,"Ashley Parker Angel was a member of this boy band created on the reality series Making the Band.","Who are O-Town?"),
+        mk(2000,"Nicole Scherzinger was the lead vocalist of this dance-pop group.","Who are the Pussycat Dolls?")
+      ]},
+      {name:'Reality TV Origins', clues:[
+        mk(400,"Kelly Clarkson won the first season of this U.S. singing competition.","What is American Idol?"),
+        mk(800,"This MTV series put seven strangers in a house and filmed what happened when they stopped being polite.","What is The Real World?"),
+        mk(1200,"Paris Hilton and Nicole Richie worked ordinary jobs on this reality series.","What is The Simple Life?"),
+        mk(1600,"This competition series asked aspiring models to impress Tyra Banks.","What is America's Next Top Model?"),
+        mk(2000,"Flavor Flav searched for love on this VH1 dating series.","What is Flavor of Love?", true)
+      ]},
+      {name:'Game Consoles', clues:[
+        mk(400,"This Nintendo console arrived in North America in 1996 with Super Mario 64.","What is the Nintendo 64?"),
+        mk(800,"Sony entered the console market with this system in the mid-1990s.","What is the PlayStation?"),
+        mk(1200,"Microsoft's first console launched in 2001 with Halo as a flagship title.","What is the Xbox?"),
+        mk(1600,"Nintendo's 2001 console used small optical discs and featured a built-in handle.","What is the GameCube?"),
+        mk(2000,"Sega's final home console launched in North America in 1999.","What is the Dreamcast?")
+      ]},
+      {name:'Sitcom Apartments', clues:[
+        mk(400,"Monica and Rachel lived in a purple-walled apartment on this sitcom.","What is Friends?"),
+        mk(800,"Jerry's New York apartment was a frequent setting on this 'show about nothing.'","What is Seinfeld?"),
+        mk(1200,"Carrie Bradshaw lived alone in Manhattan on this HBO comedy-drama.","What is Sex and the City?"),
+        mk(1600,"Ted, Marshall and Lily spent years hanging out in a Manhattan apartment on this sitcom.","What is How I Met Your Mother?"),
+        mk(2000,"Will lived with his aunt and uncle in Bel-Air on this sitcom.","What is The Fresh Prince of Bel-Air?")
+      ]},
+      {name:'Forgotten Brands', clues:[
+        mk(400,"This Canadian video-rental chain competed with Blockbuster before disappearing from most neighbourhoods.","What is Rogers Video?"),
+        mk(800,"This electronics retailer's stores were known for aisles of computers, stereos and gadgets before its Canadian locations became Best Buy.","What is Future Shop?"),
+        mk(1200,"This U.S. toy chain's mascot Geoffrey was a giraffe.","What is Toys 'R' Us?"),
+        mk(1600,"This Canadian department store was famous for its catalogue and 'Days' sales before closing in 1999.","What is Eaton's?"),
+        mk(2000,"This photography chain's one-hour photo counters were once common in Canadian malls.","What is Black's Photography?")
+      ]},
+      {name:'Deep-Cut 2000s', clues:[
+        mk(400,"This social network launched in 2004 and became famous for the verb 'poking.'","What is Facebook?"),
+        mk(800,"This Disney Channel series starred Hilary Duff as a middle-school student whose animated alter ego narrated her thoughts.","What is Lizzie McGuire?"),
+        mk(1200,"This Canadian teen drama launched the careers of Drake and Nina Dobrev across different eras.","What is Degrassi: The Next Generation?"),
+        mk(1600,"This 2006 dance film paired Channing Tatum with Jenna Dewan.","What is Step Up?", true),
+        mk(2000,"This Motorola phone and fashion accessory was frequently seen clipped to belts before smartphones took over.","What is a pager?")
+      ]}
+    ]
+  },
+  {
+    id:'g12', title:'Around the World', blurb:'Countries, famous streets, world breakfast, natural wonders, and geography deep cuts.',
+    finalQ:{question:"This country is the only one that borders both the Caspian Sea and the Persian Gulf.", answer:"What is Iran?"},
+    round1:[
+      {name:'Guess the Country', clues:[
+        mk(200,"The cities of Lisbon and Porto are in this country.","What is Portugal?"),
+        mk(400,"Cusco and the Sacred Valley are found in this country.","What is Peru?"),
+        mk(600,"Reykjavík is the capital of this island nation.","What is Iceland?"),
+        mk(800,"The Serengeti stretches across this country and neighbouring Kenya.","What is Tanzania?"),
+        mk(1000,"The ancient city of Bukhara lies in this Central Asian country.","What is Uzbekistan?")
+      ]},
+      {name:'Famous Streets', clues:[
+        mk(200,"Broadway is most closely associated with theatre in this city.","What is New York City?"),
+        mk(400,"The Champs-Élysées runs through this European capital.","What is Paris?"),
+        mk(600,"La Rambla is a famous pedestrian boulevard in this Spanish city.","What is Barcelona?"),
+        mk(800,"Orchard Road is a major shopping street in this Southeast Asian city-state.","What is Singapore?"),
+        mk(1000,"The colourful Caminito street is a landmark in the La Boca neighbourhood of this capital.","What is Buenos Aires?")
+      ]},
+      {name:'World Breakfast', clues:[
+        mk(200,"Croissants and café au lait are strongly associated with breakfast in this country.","What is France?"),
+        mk(400,"Chilaquiles are a breakfast favourite in this country.","What is Mexico?"),
+        mk(600,"A full English breakfast traditionally includes eggs, sausage, beans and tomatoes in this country.","What is England?"),
+        mk(800,"Congee is a rice porridge eaten for breakfast across Asia, especially in this country where it is called zhōu.","What is China?"),
+        mk(1000,"Ful medames, a fava-bean dish, is a classic breakfast in this North African country.","What is Egypt?")
+      ]},
+      {name:'Natural Wonders', clues:[
+        mk(200,"This giant waterfall system lies on the border of Zambia and Zimbabwe.","What is Victoria Falls?"),
+        mk(400,"The Great Barrier Reef lies off the coast of this Australian state.","What is Queensland?"),
+        mk(600,"This canyon in Arizona was carved largely by the Colorado River.","What is the Grand Canyon?"),
+        mk(800,"Salar de Uyuni, the world's largest salt flat, lies in this country.","What is Bolivia?"),
+        mk(1000,"This Vietnamese bay is known for thousands of limestone karsts rising from emerald water.","What is Ha Long Bay?", true)
+      ]},
+      {name:'Currency Exchange', clues:[
+        mk(200,"Japan uses this currency.","What is the yen?"),
+        mk(400,"Mexico uses this currency.","What is the peso?"),
+        mk(600,"Switzerland uses this currency rather than the euro.","What is the Swiss franc?"),
+        mk(800,"India uses this currency.","What is the rupee?"),
+        mk(1000,"South Africa uses this currency.","What is the rand?")
+      ]},
+      {name:'World Sports', clues:[
+        mk(200,"Sumo wrestling originated in this country.","What is Japan?"),
+        mk(400,"Hurling is a traditional field sport of this country.","What is Ireland?"),
+        mk(600,"Muay Thai is the national combat sport of this country.","What is Thailand?"),
+        mk(800,"Sepak takraw is a Southeast Asian sport played mainly using feet and a woven ball, especially popular in Thailand and this neighbouring country.","What is Malaysia?"),
+        mk(1000,"Buzkashi, played on horseback with a goat carcass, is strongly associated with this country.","What is Afghanistan?")
+      ]}
+    ],
+    round2:[
+      {name:"Capitals That Aren't Obvious", clues:[
+        mk(400,"The capital of New Zealand is this city.","What is Wellington?"),
+        mk(800,"The capital of Morocco is this city, not Casablanca or Marrakesh.","What is Rabat?"),
+        mk(1200,"The capital of Turkey is this inland city.","What is Ankara?"),
+        mk(1600,"The capital of Kazakhstan is this city, formerly called Astana, Nur-Sultan, then Astana again.","What is Astana?"),
+        mk(2000,"The capital of Burkina Faso is this city.","What is Ouagadougou?")
+      ]},
+      {name:'UNESCO-ish', clues:[
+        mk(400,"This Cambodian temple complex appears on the national flag.","What is Angkor Wat?"),
+        mk(800,"This ruined Inca citadel sits high in the Andes.","What is Machu Picchu?"),
+        mk(1200,"This Jordanian archaeological site is famous for the rock-cut Treasury.","What is Petra?"),
+        mk(1600,"This fortified Croatian city became King's Landing on Game of Thrones.","What is Dubrovnik?", true),
+        mk(2000,"This Ethiopian city is known for medieval churches carved directly into rock.","What is Lalibela?")
+      ]},
+      {name:'Island Hopping', clues:[
+        mk(400,"Bali belongs to this country.","What is Indonesia?"),
+        mk(800,"Santorini belongs to this country.","What is Greece?"),
+        mk(1200,"Zanzibar is a semi-autonomous archipelago of this African country.","What is Tanzania?"),
+        mk(1600,"The island of Hokkaido belongs to this country.","What is Japan?"),
+        mk(2000,"Socotra, famous for dragon's blood trees, belongs to this country.","What is Yemen?")
+      ]},
+      {name:'Languages', clues:[
+        mk(400,"Portuguese is the official language of this largest South American country.","What is Brazil?"),
+        mk(800,"Dutch is an official language in the Netherlands and this neighbouring country, where it is often called Flemish.","What is Belgium?"),
+        mk(1200,"Amharic is a major language of this East African country.","What is Ethiopia?"),
+        mk(1600,"Hungarian belongs to this language family, along with Finnish and Estonian.","What is Uralic?"),
+        mk(2000,"Tagalog is one of the main bases of Filipino, an official language of this country.","What are the Philippines?")
+      ]},
+      {name:'Borderline', clues:[
+        mk(400,"The United States shares its longest international land border with this country.","What is Canada?"),
+        mk(800,"Spain shares the Iberian Peninsula with this country.","What is Portugal?"),
+        mk(1200,"France and Spain are separated in part by this mountain range.","What are the Pyrenees?"),
+        mk(1600,"This tiny country is entirely surrounded by South Africa.","What is Lesotho?"),
+        mk(2000,"This European microstate is entirely surrounded by Italy and is one of the world's oldest republics.","What is San Marino?")
+      ]},
+      {name:'Airport to City', clues:[
+        mk(400,"Heathrow is the main international airport serving this city.","What is London?"),
+        mk(800,"Changi Airport serves this city-state.","What is Singapore?"),
+        mk(1200,"Schiphol serves this European capital.","What is Amsterdam?"),
+        mk(1600,"O'Hare is a major airport serving this U.S. city.","What is Chicago?"),
+        mk(2000,"Hamad International Airport serves this Middle Eastern capital.","What is Doha?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g13', title:'Music Nerds', blurb:'Opening notes, frontpeople, Canadian tracks, rock history, and deep-cut music trivia.',
+    finalQ:{question:"This 1982 album became the best-selling studio album in history and produced hits including 'Beat It' and 'Billie Jean.'", answer:"What is Thriller?"},
+    round1:[
+      {name:'Opening Notes', clues:[
+        mk(200,"This instrument has 88 keys on a standard modern version.","What is the piano?"),
+        mk(400,"A standard guitar normally has this many strings.","What is six?"),
+        mk(600,"The saxophone belongs to this instrument family despite usually being made of brass.","What is woodwind?"),
+        mk(800,"This percussion instrument uses tuned wooden bars struck with mallets.","What is a xylophone?"),
+        mk(1000,"The lowest standard male classical singing voice is this.","What is bass?")
+      ]},
+      {name:'Frontpeople', clues:[
+        mk(200,"Stevie Nicks and Lindsey Buckingham were members of this band.","Who are Fleetwood Mac?"),
+        mk(400,"Anthony Kiedis fronts this California rock band.","Who are Red Hot Chili Peppers?"),
+        mk(600,"Florence Welch fronts this British group.","What is Florence + the Machine?"),
+        mk(800,"Brandon Flowers is the lead singer of this Las Vegas band.","Who are The Killers?"),
+        mk(1000,"Win Butler and Régine Chassagne co-founded this Montreal indie-rock band.","Who are Arcade Fire?")
+      ]},
+      {name:'Canadian Tracks', clues:[
+        mk(200,"'Call Me Maybe' made this Canadian singer an international pop star.","Who is Carly Rae Jepsen?"),
+        mk(400,"'The Weight' was recorded by this roots-rock group with deep Canadian connections.","Who are The Band?"),
+        mk(600,"'Life Is a Highway' was originally a hit for this Canadian singer-songwriter.","Who is Tom Cochrane?"),
+        mk(800,"'1234' became a breakthrough hit for this Canadian indie singer.","Who is Feist?"),
+        mk(1000,"'The Safety Dance' was recorded by this Montreal new-wave band.","Who are Men Without Hats?")
+      ]},
+      {name:'Album Title, Please', clues:[
+        mk(200,"Nirvana's 1991 album featuring 'Smells Like Teen Spirit.'","What is Nevermind?"),
+        mk(400,"Taylor Swift's 2014 album featuring 'Blank Space.'","What is 1989?"),
+        mk(600,"Beyoncé's 2016 visual album featuring 'Formation.'","What is Lemonade?"),
+        mk(800,"Radiohead's 1997 album featuring 'Paranoid Android.'","What is OK Computer?", true),
+        mk(1000,"Lauryn Hill's 1998 solo album beginning with the words 'The Miseducation.'","What is The Miseducation of Lauryn Hill?")
+      ]},
+      {name:'Name the Decade', clues:[
+        mk(200,"The Beatles appeared on The Ed Sullivan Show and Beatlemania hit North America in this decade.","What are the 1960s?"),
+        mk(400,"Disco peaked commercially with artists like Donna Summer and the Bee Gees in this decade.","What are the 1970s?"),
+        mk(600,"MTV launched and synth-pop exploded in this decade.","What are the 1980s?"),
+        mk(800,"Grunge and Britpop were major rock movements in this decade.","What are the 1990s?"),
+        mk(1000,"Streaming became the dominant music-consumption model during this decade.","What are the 2010s?")
+      ]},
+      {name:'One Word Artists', clues:[
+        mk(200,"This singer born Robyn Fenty uses a single stage name.","Who is Rihanna?"),
+        mk(400,"This British singer born Adele Adkins uses her first name professionally.","Who is Adele?"),
+        mk(600,"This Colombian singer behind 'Hips Don't Lie' performs under one name.","Who is Shakira?"),
+        mk(800,"This Icelandic singer behind 'Human Behaviour' and 'Army of Me' uses one name.","Who is Björk?"),
+        mk(1000,"This Brazilian singer-songwriter born Maria do Céu Whitaker Poças is known simply by this three-letter stage name.","Who is Céu?")
+      ]}
+    ],
+    round2:[
+      {name:'Rock History', clues:[
+        mk(400,"This festival held in New York state in 1969 became a defining symbol of the counterculture era.","What is Woodstock?"),
+        mk(800,"This band's 1973 album The Dark Side of the Moon spent years on the Billboard charts.","Who are Pink Floyd?"),
+        mk(1200,"This punk band released London Calling in 1979.","Who are The Clash?"),
+        mk(1600,"This Seattle band released Ten in 1991.","Who are Pearl Jam?"),
+        mk(2000,"This manager, who ran the London boutique SEX with Vivienne Westwood, managed the Sex Pistols.","Who is Malcolm McLaren?")
+      ]},
+      {name:'Samples & Interpolations', clues:[
+        mk(400,"'Ice Ice Baby' famously sampled the bass line from this Queen and David Bowie song.","What is Under Pressure?"),
+        mk(800,"'Crazy in Love' prominently samples 'Are You My Woman? (Tell Me So)' by this group.","Who are The Chi-Lites?"),
+        mk(1200,"Eminem's 'Stan' samples 'Thank You' by this singer.","Who is Dido?"),
+        mk(1600,"Kanye West's 'Stronger' samples 'Harder, Better, Faster, Stronger' by this French duo.","Who are Daft Punk?"),
+        mk(2000,"The Verve's 'Bitter Sweet Symphony' famously used an orchestral recording connected to this Rolling Stones song.","What is The Last Time?")
+      ]},
+      {name:'Festival Headliners', clues:[
+        mk(400,"This California festival is held annually in Indio.","What is Coachella?"),
+        mk(800,"This major Chicago festival shares its name with a word coined by Perry Farrell.","What is Lollapalooza?"),
+        mk(1200,"This Tennessee festival takes place on a farm in Manchester.","What is Bonnaroo?"),
+        mk(1600,"This British festival takes place near Pilton and is famous for the Pyramid Stage.","What is Glastonbury?"),
+        mk(2000,"This Montreal music festival is commonly abbreviated OSHEAGA.","What is Osheaga?", true)
+      ]},
+      {name:'Songwriters', clues:[
+        mk(400,"This singer-songwriter wrote 'Nothing Compares 2 U' before Sinéad O'Connor made it a hit.","Who is Prince?"),
+        mk(800,"Dolly Parton wrote both 'Jolene' and this Whitney Houston signature ballad.","What is I Will Always Love You?"),
+        mk(1200,"This Canadian singer-songwriter wrote 'Hallelujah.'","Who is Leonard Cohen?"),
+        mk(1600,"This Bee Gees member co-wrote numerous hits with brothers Barry and Maurice.","Who is Robin Gibb?"),
+        mk(2000,"This Motown songwriting trio wrote hits including 'You Can't Hurry Love' and 'Stop! In the Name of Love.'","Who are Holland–Dozier–Holland?")
+      ]},
+      {name:'Music Theory, Kinda', clues:[
+        mk(400,"A musical interval spanning eight notes is called this.","What is an octave?"),
+        mk(800,"The Italian tempo marking allegro generally means this.","What is fast or lively?"),
+        mk(1200,"A chord built from three notes is called this.","What is a triad?"),
+        mk(1600,"Changing from one key to another within a piece is called this.","What is modulation?"),
+        mk(2000,"In common time, this many quarter-note beats fill one measure.","What is four?")
+      ]},
+      {name:'Deep Cuts', clues:[
+        mk(400,"This band recorded the album In Rainbows and initially released it online with a pay-what-you-want model.","Who are Radiohead?"),
+        mk(800,"This singer's backing band was called the Revolution during his Purple Rain era.","Who is Prince?"),
+        mk(1200,"This New York band released Is This It in 2001.","Who are The Strokes?"),
+        mk(1600,"This duo of André 3000 and Big Boi released Speakerboxxx/The Love Below.","Who are Outkast?", true),
+        mk(2000,"This singer's 1971 album Blue includes 'A Case of You.'","Who is Joni Mitchell?")
+      ]}
+    ]
+  },
+  {
+    id:'g14', title:'Foodies Only', blurb:'Cheese, street food, sauces, baking, and fine dining from around the world.',
+    finalQ:{question:"This fizzy soft drink was created by pharmacist John Pemberton in Atlanta in 1886.", answer:"What is Coca-Cola?"},
+    round1:[
+      {name:'Cheese, Please', clues:[
+        mk(200,"This Italian cheese is traditionally grated over pasta and risotto.","What is Parmesan?"),
+        mk(400,"This Greek cheese is traditionally made from sheep's milk, often with goat's milk added.","What is feta?"),
+        mk(600,"This soft French cheese has an edible white rind and shares its name with a region in Normandy.","What is Camembert?"),
+        mk(800,"This blue-veined English cheese is a classic Christmas cheeseboard choice.","What is Stilton?"),
+        mk(1000,"This semi-hard Swiss cheese is famous for its holes and is named after a valley.","What is Emmental?")
+      ]},
+      {name:'Street Food', clues:[
+        mk(200,"Tacos al pastor are a street-food favourite in this country.","What is Mexico?"),
+        mk(400,"Bánh mì sandwiches come from this country.","What is Vietnam?"),
+        mk(600,"Currywurst is especially associated with this German city.","What is Berlin?"),
+        mk(800,"Takoyaki, battered balls containing octopus, come from this country.","What is Japan?"),
+        mk(1000,"Koshari, combining rice, lentils, pasta and tomato sauce, is a street-food staple in this country.","What is Egypt?")
+      ]},
+      {name:"What's in the Sauce?", clues:[
+        mk(200,"Classic pesto gets its green colour primarily from this herb.","What is basil?"),
+        mk(400,"Hollandaise is an emulsion of egg yolks, butter and this acidic ingredient, often lemon juice.","What is acid?"),
+        mk(600,"Tzatziki is made with yogurt, cucumber and this herb commonly added in Greek cooking.","What is dill?"),
+        mk(800,"Romesco sauce from Catalonia commonly contains roasted red peppers, tomatoes and this nut.","What are almonds?"),
+        mk(1000,"Mole poblano is known for complex spices and often includes a small amount of this bittersweet ingredient.","What is chocolate?", true)
+      ]},
+      {name:'Bake It', clues:[
+        mk(200,"This gas produced by yeast helps bread dough rise.","What is carbon dioxide?"),
+        mk(400,"A meringue is made primarily by whipping these.","What are egg whites?"),
+        mk(600,"Blind baking means baking a pie or tart crust before adding this.","What is the filling?"),
+        mk(800,"This French pastry dough puffs through repeated layers of butter and dough.","What is laminated dough or puff pastry?"),
+        mk(1000,"Crème brûlée gets its crackly top by caramelizing this ingredient.","What is sugar?")
+      ]},
+      {name:'Restaurant Words', clues:[
+        mk(200,"An à la carte menu prices dishes in this way rather than as part of a fixed meal.","What is individually?"),
+        mk(400,"This French term means a small complimentary bite sent by the chef.","What is an amuse-bouche?"),
+        mk(600,"A prix fixe menu offers a meal for this kind of price.","What is a fixed price?"),
+        mk(800,"In kitchen slang, to '86' a menu item means to do this.","What is remove it or say it is unavailable?"),
+        mk(1000,"This Italian term describes pasta cooked firm to the bite.","What is al dente?")
+      ]},
+      {name:'Fruit or Vegetable?', clues:[
+        mk(200,"Botanically, tomatoes are this type of plant structure because they develop from a flower's ovary.","What is a fruit?"),
+        mk(400,"Carrots are the edible part of this plant structure.","What is a root?"),
+        mk(600,"Broccoli is largely made up of unopened flower buds and this supporting structure.","What is the stem?"),
+        mk(800,"A cucumber is botanically classified as this.","What is a fruit?"),
+        mk(1000,"An avocado is botanically this type of fruit with one large seed.","What is a berry?")
+      ]}
+    ],
+    round2:[
+      {name:'World Dishes', clues:[
+        mk(400,"Bibimbap is a rice dish from this country.","What is South Korea?"),
+        mk(800,"Tagine refers both to a North African stew and the vessel used to cook it, especially in this country.","What is Morocco?"),
+        mk(1200,"Ceviche is strongly associated with this South American country.","What is Peru?"),
+        mk(1600,"Khachapuri is a cheese-filled bread from this country in the Caucasus.","What is Georgia?"),
+        mk(2000,"Adobo is a major cooking style in this Southeast Asian country.","What are the Philippines?")
+      ]},
+      {name:'Cocktail Cabinet', clues:[
+        mk(400,"A classic margarita combines tequila, lime and this orange liqueur.","What is triple sec or Cointreau?"),
+        mk(800,"A mojito traditionally uses white rum, lime, sugar, soda water and this herb.","What is mint?"),
+        mk(1200,"A negroni combines gin, sweet vermouth and this bitter red aperitif.","What is Campari?"),
+        mk(1600,"A Moscow mule traditionally combines vodka, ginger beer and this citrus juice.","What is lime juice?", true),
+        mk(2000,"A French 75 combines gin, lemon, sugar and this sparkling wine.","What is Champagne?")
+      ]},
+      {name:'Knife Skills', clues:[
+        mk(400,"This cut produces long, thin matchstick-sized strips.","What is julienne?"),
+        mk(800,"This tiny cube cut is smaller than a standard dice.","What is brunoise?"),
+        mk(1200,"To chiffonade leafy herbs means to cut them into these.","What are thin ribbons?"),
+        mk(1600,"A chef's knife is rocked on the board around this curved part of the blade.","What is the belly?"),
+        mk(2000,"The claw grip protects these while chopping.","What are the fingertips?")
+      ]},
+      {name:'Food Science', clues:[
+        mk(400,"The browning reaction between amino acids and sugars in cooked food is named for this French chemist.","What is the Maillard reaction?"),
+        mk(800,"Gluten develops when water is mixed with proteins found mainly in this grain.","What is wheat?"),
+        mk(1200,"This process keeps oil and water mixed in sauces like mayonnaise.","What is emulsification?"),
+        mk(1600,"Yeast fermentation converts sugars into carbon dioxide and this alcohol.","What is ethanol?"),
+        mk(2000,"Sous vide cooking relies on precise control of this variable.","What is temperature?")
+      ]},
+      {name:'Coffee & Tea', clues:[
+        mk(400,"Espresso topped with steamed milk and foam is this drink.","What is a cappuccino?"),
+        mk(800,"Matcha is powdered tea traditionally associated with this country.","What is Japan?"),
+        mk(1200,"Masala chai is black tea brewed with milk and these aromatic additions.","What are spices?"),
+        mk(1600,"Earl Grey is flavoured with oil from this citrus fruit.","What is bergamot?"),
+        mk(2000,"Cold brew differs from iced coffee because it is brewed using this rather than hot water.","What is cold or room-temperature water?")
+      ]},
+      {name:'Fine Dining Geography', clues:[
+        mk(400,"The Michelin Guide originated in this country.","What is France?"),
+        mk(800,"Noma, one of the world's most influential modern restaurants, is in this capital.","What is Copenhagen?"),
+        mk(1200,"San Sebastián, famous for pintxos and fine dining, is in this region of Spain.","What is the Basque Country?"),
+        mk(1600,"Osteria Francescana is located in this Italian city, also known for balsamic vinegar.","What is Modena?"),
+        mk(2000,"Central, a celebrated restaurant associated with chef Virgilio Martínez, is in this South American capital.","What is Lima?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g15', title:'Sports Night', blurb:'Scoreboards, Toronto teams, Olympic stuff, legendary athletes, and championship trophies.',
+    finalQ:{question:"In 1972, Paul Henderson scored the series-winning goal in Game 8 of this famous Canada–Soviet hockey series.", answer:"What is the Summit Series?"},
+    round1:[
+      {name:'Scoreboard', clues:[
+        mk(200,"A field goal in basketball from beyond the arc is worth this many points.","What is three?"),
+        mk(400,"A safety in American football is worth this many points.","What is two?"),
+        mk(600,"In hockey, a hat trick means one player scores this many goals in a game.","What is three?"),
+        mk(800,"In golf, one stroke under par on a hole is called this.","What is a birdie?"),
+        mk(1000,"In volleyball, a standard set is usually played to this many points, with a two-point margin required.","What is 25?")
+      ]},
+      {name:'Toronto Teams', clues:[
+        mk(200,"This NHL team plays its home games at Scotiabank Arena.","Who are the Toronto Maple Leafs?"),
+        mk(400,"This MLB team plays at Rogers Centre.","Who are the Toronto Blue Jays?"),
+        mk(600,"This NBA team won the 2019 championship.","Who are the Toronto Raptors?"),
+        mk(800,"This MLS club won the 2017 MLS Cup.","Who is Toronto FC?"),
+        mk(1000,"This CFL team plays in Toronto and has won the Grey Cup many times.","Who are the Toronto Argonauts?")
+      ]},
+      {name:'Olympic Stuff', clues:[
+        mk(200,"The Olympic rings contain this many interlocking rings.","What is five?"),
+        mk(400,"The Summer Olympics are normally held every this many years.","What is four?"),
+        mk(600,"This city hosted the 2012 Summer Olympics.","What is London?"),
+        mk(800,"This sport includes foil, épée and sabre.","What is fencing?"),
+        mk(1000,"The decathlon contains this many track-and-field events.","What is ten?", true)
+      ]},
+      {name:'Legends', clues:[
+        mk(200,"This basketball star was nicknamed His Airness.","Who is Michael Jordan?"),
+        mk(400,"This hockey player holds the NHL career records for goals, assists and points.","Who is Wayne Gretzky?"),
+        mk(600,"This Jamaican sprinter won Olympic gold in the 100 metres three Games in a row.","Who is Usain Bolt?"),
+        mk(800,"This tennis champion has won 23 Grand Slam singles titles in the Open Era.","Who is Serena Williams?"),
+        mk(1000,"This Argentine football legend captained his country to the 1986 World Cup title.","Who is Diego Maradona?")
+      ]},
+      {name:'Rules, Rules, Rules', clues:[
+        mk(200,"In baseball, four balls result in this.","What is a walk?"),
+        mk(400,"In soccer, a red card means a player must do this.","What is leave the field or be sent off?"),
+        mk(600,"In tennis, a serve that the opponent cannot touch is called this.","What is an ace?"),
+        mk(800,"In curling, the target area of concentric circles is called this.","What is the house?"),
+        mk(1000,"In cricket, a batter is out if the bowler knocks these off the stumps.","What are the bails?")
+      ]},
+      {name:'Stadiums & Arenas', clues:[
+        mk(200,"Fenway Park is home to this MLB team.","Who are the Boston Red Sox?"),
+        mk(400,"Madison Square Garden is home to the Knicks and this NHL team.","Who are the New York Rangers?"),
+        mk(600,"Camp Nou is historically associated with this Spanish football club.","What is FC Barcelona?"),
+        mk(800,"Wembley Stadium is located in this city.","What is London?"),
+        mk(1000,"The Maracanã is a legendary football stadium in this Brazilian city.","What is Rio de Janeiro?")
+      ]}
+    ],
+    round2:[
+      {name:'Championship Trophies', clues:[
+        mk(400,"The Grey Cup is awarded in this league.","What is the CFL?"),
+        mk(800,"The Larry O'Brien Trophy goes to the champion of this league.","What is the NBA?"),
+        mk(1200,"The Commissioner's Trophy goes to the champion of this league.","What is Major League Baseball?"),
+        mk(1600,"The Webb Ellis Cup is awarded to the winner of this sport's World Cup.","What is rugby union?"),
+        mk(2000,"The Borg-Warner Trophy is awarded to the winner of this famous auto race.","What is the Indianapolis 500?")
+      ]},
+      {name:'Record Books', clues:[
+        mk(400,"This swimmer won 28 Olympic medals, more than any other Olympian.","Who is Michael Phelps?"),
+        mk(800,"This baseball player holds MLB's career home-run record with 762.","Who is Barry Bonds?"),
+        mk(1200,"This NBA player scored 100 points in a single game in 1962.","Who is Wilt Chamberlain?"),
+        mk(1600,"This NHL goaltender has the most career wins with 691.","Who is Martin Brodeur?"),
+        mk(2000,"This runner set a marathon world record under two hours in a special exhibition event in 2019, though it did not count as an official record.","Who is Eliud Kipchoge?")
+      ]},
+      {name:'Sports Geography', clues:[
+        mk(400,"The Masters golf tournament is played in this U.S. state.","What is Georgia?"),
+        mk(800,"The Monaco Grand Prix takes place on the streets of this tiny principality.","What is Monaco?"),
+        mk(1200,"The Tour de France traditionally finishes on this Paris avenue.","What is the Champs-Élysées?"),
+        mk(1600,"The 24 Hours of Le Mans takes place in this country.","What is France?", true),
+        mk(2000,"The Dakar Rally originally finished in Dakar, the capital of this country.","What is Senegal?")
+      ]},
+      {name:'Nicknames', clues:[
+        mk(400,"Earvin Johnson is better known by this nickname.","What is Magic?"),
+        mk(800,"Shaquille O'Neal is often shortened to this four-letter nickname.","What is Shaq?"),
+        mk(1200,"Cal Ripken Jr. became known as this for his consecutive-games streak.","What is the Iron Man?"),
+        mk(1600,"Edson Arantes do Nascimento is known worldwide by this football nickname.","Who is Pelé?"),
+        mk(2000,"Eric Esch, a heavyweight boxer and MMA fighter, competed under this dairy-themed nickname.","What is Butterbean?")
+      ]},
+      {name:'Weird Sports', clues:[
+        mk(400,"In this winter sport, teams slide stones across ice toward a target while sweeping the path.","What is curling?"),
+        mk(800,"This sport combines cross-country skiing and rifle shooting.","What is biathlon?"),
+        mk(1200,"Sepak takraw resembles volleyball but players primarily use these body parts instead of their hands.","What are the feet?"),
+        mk(1600,"Bossaball mixes volleyball, soccer and gymnastics on an inflatable court containing these springy surfaces.","What are trampolines?"),
+        mk(2000,"Chess boxing alternates rounds of chess with rounds of this combat sport.","What is boxing?")
+      ]},
+      {name:'Canadian Sports History', clues:[
+        mk(400,"This Canadian sprinter won the 100 metres at the 1996 Atlanta Olympics.","Who is Donovan Bailey?"),
+        mk(800,"This Canadian figure skater won three consecutive men's world titles from 2011 through 2013.","Who is Patrick Chan?"),
+        mk(1200,"This golfer became the first Canadian man to win a major championship at the 2003 Masters.","Who is Mike Weir?"),
+        mk(1600,"This tennis player became the first Canadian to reach a men's Grand Slam singles final at Wimbledon in 2016.","Who is Milos Raonic?"),
+        mk(2000,"This Canadian women's soccer star became the all-time leading scorer in international soccer, men's or women's, during her career.","Who is Christine Sinclair?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g16', title:'Animal Kingdom', blurb:'Big cats, ocean life, animal babies, evolution, and the deadliest creatures on Earth.',
+    finalQ:{question:"This bird, measured during a hunting dive, is the fastest animal on Earth.", answer:"What is the peregrine falcon?"},
+    round1:[
+      {name:'Big Cats', clues:[
+        mk(200,"This cat is the largest living species of cat.","What is the tiger?"),
+        mk(400,"This spotted cat is the fastest land animal.","What is the cheetah?"),
+        mk(600,"This big cat lives in the Americas and has the strongest bite relative to body size among the big cats.","What is the jaguar?"),
+        mk(800,"This big cat is known for a mane in adult males.","What is the lion?"),
+        mk(1000,"This elusive cat of Central and South Asia is sometimes called the ghost of the mountains.","What is the snow leopard?")
+      ]},
+      {name:'Ocean Life', clues:[
+        mk(200,"This is the largest fish species in the world.","What is the whale shark?"),
+        mk(400,"This marine mammal uses echolocation and is famous for high intelligence.","What is a dolphin?"),
+        mk(600,"This cephalopod has eight arms and three hearts.","What is an octopus?"),
+        mk(800,"This crustacean may live for decades and continues growing throughout much of its life.","What is a lobster?"),
+        mk(1000,"This deep-diving whale is known for the loudest biological sound ever measured.","What is the sperm whale?")
+      ]},
+      {name:'Animal Babies', clues:[
+        mk(200,"A baby kangaroo is called this.","What is a joey?"),
+        mk(400,"A baby goat is called this.","What is a kid?"),
+        mk(600,"A baby swan is called this.","What is a cygnet?"),
+        mk(800,"A baby eel is known by this transparent-sounding term during one stage of development.","What is a glass eel?"),
+        mk(1000,"A baby hare is called this.","What is a leveret?")
+      ]},
+      {name:'Who Eats What?', clues:[
+        mk(200,"Giant pandas eat a diet dominated by this plant.","What is bamboo?"),
+        mk(400,"Koalas specialize in eating leaves from this tree.","What is eucalyptus?"),
+        mk(600,"Flamingos filter-feed on algae and small organisms including this crustacean.","What are brine shrimp?"),
+        mk(800,"Anteaters use long tongues to eat ants and these closely related insects.","What are termites?"),
+        mk(1000,"The blue whale feeds mainly on these tiny crustaceans.","What is krill?", true)
+      ]},
+      {name:'Animal Superpowers', clues:[
+        mk(200,"This amphibian can regrow limbs and parts of its spinal cord.","What is the axolotl?"),
+        mk(400,"This bird can hover and fly backward.","What is the hummingbird?"),
+        mk(600,"This mammal can slow its heart rate dramatically during long underwater dives.","What is a seal?"),
+        mk(800,"This tiny creature is famous for surviving extreme dehydration and even exposure to space.","What is a tardigrade?"),
+        mk(1000,"This shrimp creates a cavitation bubble with a claw snap that produces an extremely loud shockwave.","What is the pistol shrimp?")
+      ]},
+      {name:'Collective Nouns', clues:[
+        mk(200,"A group of lions is called this.","What is a pride?"),
+        mk(400,"A group of crows is famously called this.","What is a murder?"),
+        mk(600,"A group of geese on the ground is called this.","What is a gaggle?"),
+        mk(800,"A group of owls is traditionally called this.","What is a parliament?"),
+        mk(1000,"A group of rhinoceroses is traditionally called this.","What is a crash?")
+      ]}
+    ],
+    round2:[
+      {name:'Evolution', clues:[
+        mk(400,"Charles Darwin studied finches on these islands.","What are the Galápagos Islands?"),
+        mk(800,"This term describes traits that improve an organism's ability to survive and reproduce in its environment.","What is adaptation?"),
+        mk(1200,"Whales evolved from land-dwelling mammals and still possess tiny vestigial bones related to this body region.","What is the pelvis or hind limbs?"),
+        mk(1600,"Birds are the living descendants of this group of dinosaurs.","What are theropods?"),
+        mk(2000,"Convergent evolution explains why unrelated species can independently develop similar this type of feature.","What are adaptations or traits?")
+      ]},
+      {name:'Deadly Creatures', clues:[
+        mk(400,"This mosquito-borne disease is caused by Plasmodium parasites.","What is malaria?"),
+        mk(800,"The inland taipan is a highly venomous snake native to this country.","What is Australia?"),
+        mk(1200,"This small blue-ringed cephalopod can deliver tetrodotoxin in its bite.","What is the blue-ringed octopus?"),
+        mk(1600,"The box jellyfish is especially notorious in the waters of this continent.","What is Australia?", true),
+        mk(2000,"The poison dart frog's toxins are associated with alkaloids acquired from this source in the wild.","What is its diet?")
+      ]},
+      {name:'Bird Brain', clues:[
+        mk(400,"This black bird family includes ravens and is famous for tool use and problem solving.","What are corvids?"),
+        mk(800,"This bird cannot fly but can sprint faster than most humans.","What is an ostrich?"),
+        mk(1200,"This seabird is famous for long migrations from Arctic to Antarctic waters.","What is the Arctic tern?"),
+        mk(1600,"This New Zealand parrot is known for intelligence and mischievous behaviour around cars.","What is the kea?"),
+        mk(2000,"This bird's courtship displays can involve elaborate structures called bowers.","What is a bowerbird?")
+      ]},
+      {name:'Odd Mammals', clues:[
+        mk(400,"This egg-laying mammal has a duck-like bill.","What is the platypus?"),
+        mk(800,"This spiny egg-laying mammal is another monotreme.","What is an echidna?"),
+        mk(1200,"This mammal's scales are made of keratin and make it look armoured.","What is a pangolin?"),
+        mk(1600,"The okapi is the closest living relative of this tall African mammal.","What is the giraffe?"),
+        mk(2000,"The saiga is an antelope known for this unusually large body feature.","What is its nose or snout?")
+      ]},
+      {name:'Habitats', clues:[
+        mk(400,"Polar bears are native to this polar region.","What is the Arctic?"),
+        mk(800,"Orangutans are native to the islands of Borneo and this other Indonesian island.","What is Sumatra?"),
+        mk(1200,"Lemurs are native only to this island nation.","What is Madagascar?"),
+        mk(1600,"The giant panda is native to mountain forests of this country.","What is China?"),
+        mk(2000,"The kakapo is a flightless parrot endemic to this country.","What is New Zealand?")
+      ]},
+      {name:'Scientific Names', clues:[
+        mk(400,"Homo sapiens is the scientific name for this species.","What are humans?"),
+        mk(800,"Canis lupus is the scientific name for this animal.","What is the grey wolf?"),
+        mk(1200,"Felis catus is the domestic version of this pet.","What is the cat?"),
+        mk(1600,"Ursus maritimus is better known by this common name.","What is the polar bear?"),
+        mk(2000,"Gorilla beringei beringei is the scientific subspecies name for this great ape.","What is the mountain gorilla?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g17', title:'Movies & TV: The Binge Board', blurb:'90s movies, sitcom families, animated favourites, movie villains, and prestige TV.',
+    finalQ:{question:"This 1927 film is commonly cited as the first feature-length movie with synchronized spoken dialogue sequences.", answer:"What is The Jazz Singer?"},
+    round1:[
+      {name:'90s Movies', clues:[
+        mk(200,"A young Macaulay Culkin defends his house from burglars in this film.","What is Home Alone?"),
+        mk(400,"Robin Williams disguises himself as a nanny in this 1993 comedy.","What is Mrs. Doubtfire?"),
+        mk(600,"A board game unleashes jungle chaos in this 1995 film.","What is Jumanji?"),
+        mk(800,"Bill Murray relives the same day in this 1993 comedy.","What is Groundhog Day?"),
+        mk(1000,"A mysterious videotape drives the plot of this influential 1998 Japanese horror film.","What is Ring or Ringu?")
+      ]},
+      {name:'Sitcom Families', clues:[
+        mk(200,"The Tanner family lived in San Francisco on this sitcom.","What is Full House?"),
+        mk(400,"The Banks family lived in Bel-Air on this sitcom.","What is The Fresh Prince of Bel-Air?"),
+        mk(600,"The Dunphys are one branch of the family tree on this ABC sitcom.","What is Modern Family?"),
+        mk(800,"The Bluths are the dysfunctional centre of this comedy.","What is Arrested Development?"),
+        mk(1000,"The Rose family loses its fortune and moves to a small town on this Canadian sitcom.","What is Schitt's Creek?")
+      ]},
+      {name:'Animated Movies', clues:[
+        mk(200,"Simba is the young hero of this Disney film.","What is The Lion King?"),
+        mk(400,"A rat named Remy dreams of becoming a chef in this Pixar film.","What is Ratatouille?"),
+        mk(600,"Hiccup befriends Toothless in this animated franchise.","What is How to Train Your Dragon?"),
+        mk(800,"Miguel travels to the Land of the Dead in this Pixar film.","What is Coco?"),
+        mk(1000,"A young girl named Chihiro enters a spirit world in this Studio Ghibli film.","What is Spirited Away?", true)
+      ]},
+      {name:'TV Workplaces', clues:[
+        mk(200,"Dunder Mifflin sells this product.","What is paper?"),
+        mk(400,"Leslie Knope works in the parks department of this fictional Indiana city.","What is Pawnee?"),
+        mk(600,"The employees of Cloud 9 work in this type of business on Superstore.","What is a big-box retail store?"),
+        mk(800,"The staff of Sacred Heart work in this kind of institution on Scrubs.","What is a hospital?"),
+        mk(1000,"Lumon Industries is the mysterious employer on this Apple TV+ series.","What is Severance?")
+      ]},
+      {name:'Movie Villains', clues:[
+        mk(200,"This dark lord forged the One Ring in The Lord of the Rings.","Who is Sauron?"),
+        mk(400,"This Batman villain uses fear toxin and wears a burlap-style mask.","Who is Scarecrow?"),
+        mk(600,"This fashion-obsessed Disney villain wants a coat made from Dalmatian puppies.","Who is Cruella de Vil?"),
+        mk(800,"This Marvel villain seeks the Infinity Stones to wipe out half of all life.","Who is Thanos?"),
+        mk(1000,"This ruthless killer uses a captive-bolt pistol in No Country for Old Men.","Who is Anton Chigurh?")
+      ]},
+      {name:'Actors Playing Actors', clues:[
+        mk(200,"Leonardo DiCaprio played fading TV actor Rick Dalton in this Quentin Tarantino film.","What is Once Upon a Time in Hollywood?"),
+        mk(400,"Emma Stone played aspiring actor Mia in this musical.","What is La La Land?"),
+        mk(600,"Michael Keaton played a former superhero actor mounting a Broadway comeback in this Best Picture winner.","What is Birdman?"),
+        mk(800,"Nicolas Cage played a fictionalized version of himself in this 2022 comedy.","What is The Unbearable Weight of Massive Talent?"),
+        mk(1000,"Naomi Watts plays aspiring actor Betty Elms in this David Lynch film.","What is Mulholland Drive?")
+      ]}
+    ],
+    round2:[
+      {name:'Prestige TV Characters', clues:[
+        mk(400,"Walter White's former student and eventual partner is this character.","Who is Jesse Pinkman?"),
+        mk(800,"Don Draper works in this industry on Mad Men.","What is advertising?"),
+        mk(1200,"Succession centres on this media-owning family.","Who are the Roys?"),
+        mk(1600,"Tony Soprano sees this type of professional to discuss panic attacks and family problems.","What is a psychiatrist?"),
+        mk(2000,"The Wire begins largely around the drug trade in this U.S. city.","What is Baltimore?")
+      ]},
+      {name:'Directors', clues:[
+        mk(400,"This director made Jaws, E.T. and Jurassic Park.","Who is Steven Spielberg?"),
+        mk(800,"This director made Pulp Fiction and Kill Bill.","Who is Quentin Tarantino?"),
+        mk(1200,"This director made Get Out and Nope.","Who is Jordan Peele?"),
+        mk(1600,"This director made Lost in Translation and Marie Antoinette.","Who is Sofia Coppola?"),
+        mk(2000,"This South Korean director made Parasite and Memories of Murder.","Who is Bong Joon-ho?")
+      ]},
+      {name:'Book to Screen', clues:[
+        mk(400,"The Lord of the Rings films are based on novels by this author.","Who is J.R.R. Tolkien?"),
+        mk(800,"Gone Girl was adapted from a novel by this author, who also wrote the screenplay.","Who is Gillian Flynn?"),
+        mk(1200,"The Handmaid's Tale is based on a novel by this Canadian author.","Who is Margaret Atwood?"),
+        mk(1600,"No Country for Old Men was adapted from a novel by this author.","Who is Cormac McCarthy?", true),
+        mk(2000,"The Godfather was based on a novel by this author.","Who is Mario Puzo?")
+      ]},
+      {name:'Oscar History', clues:[
+        mk(400,"This film became the first non-English-language film to win Best Picture.","What is Parasite?"),
+        mk(800,"Kathryn Bigelow became the first woman to win Best Director for this film.","What is The Hurt Locker?"),
+        mk(1200,"This 1997 blockbuster tied the record with 11 Oscar wins.","What is Titanic?"),
+        mk(1600,"Daniel Day-Lewis won his third Best Actor Oscar for playing this U.S. president.","Who is Abraham Lincoln?"),
+        mk(2000,"This 1975 film became one of only three films to win the 'Big Five' Oscars.","What is One Flew Over the Cuckoo's Nest?")
+      ]},
+      {name:'TV Theme Details', clues:[
+        mk(400,"'I'll Be There for You' by The Rembrandts opens this sitcom.","What is Friends?"),
+        mk(800,"'Where Everybody Knows Your Name' opens this Boston-set sitcom.","What is Cheers?"),
+        mk(1200,"The opening credits of The Sopranos feature Tony driving through this U.S. state.","What is New Jersey?"),
+        mk(1600,"The Succession theme was composed by this Emmy-winning composer.","Who is Nicholas Britell?"),
+        mk(2000,"'A Beautiful Mine' by RJD2 was used as the opening theme for this advertising drama.","What is Mad Men?")
+      ]},
+      {name:'One-Season Wonders', clues:[
+        mk(400,"This 1999 teen series created by Paul Feig and produced by Judd Apatow launched many future stars.","What is Freaks and Geeks?"),
+        mk(800,"This Joss Whedon sci-fi western aired only one season before becoming a cult favourite.","What is Firefly?"),
+        mk(1200,"This 2014 romantic comedy series starring Cristin Milioti and Ben Feldman lasted one season.","What is A to Z?"),
+        mk(1600,"This 2018 Netflix series starred Jonah Hill and Emma Stone in a surreal drug trial.","What is Maniac?"),
+        mk(2000,"This 2001 sitcom starring Jason Bateman as a man who becomes an accidental con artist was cancelled after one season.","What is Some of My Best Friends?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g18', title:'Smart-People Jeopardy', blurb:'Simple science, history you should know, mental math, and hard geography.',
+    finalQ:{question:"In 1953, James Watson and Francis Crick published a model of this molecule's double-helix structure, building on work by Rosalind Franklin and others.", answer:"What is DNA?"},
+    round1:[
+      {name:'Simple Science', clues:[
+        mk(200,"The centre of an atom contains protons and these neutral particles.","What are neutrons?"),
+        mk(400,"This planet is closest to the Sun.","What is Mercury?"),
+        mk(600,"Plants use sunlight to make energy through this process.","What is photosynthesis?"),
+        mk(800,"The pH of pure water at room temperature is approximately this number.","What is 7?"),
+        mk(1000,"This law says every action has an equal and opposite reaction.","What is Newton's third law?")
+      ]},
+      {name:'History You Should Know', clues:[
+        mk(200,"The Renaissance began in this European country.","What is Italy?"),
+        mk(400,"The Berlin Wall fell in this year.","What is 1989?"),
+        mk(600,"The Magna Carta was sealed in this country in 1215.","What is England?"),
+        mk(800,"This empire built Machu Picchu.","What is the Inca Empire?"),
+        mk(1000,"The Meiji Restoration transformed this country beginning in 1868.","What is Japan?")
+      ]},
+      {name:'Words, Words, Words', clues:[
+        mk(200,"A word that means the opposite of another word is called this.","What is an antonym?"),
+        mk(400,"A word formed from the first letters of a phrase, like NASA, is this.","What is an acronym?"),
+        mk(600,"A phrase whose meaning is not literal, like 'spill the beans,' is this.","What is an idiom?"),
+        mk(800,"A word that sounds like what it describes, such as 'buzz,' is this.","What is onomatopoeia?"),
+        mk(1000,"The study of word origins is called this.","What is etymology?")
+      ]},
+      {name:'Mental Math', clues:[
+        mk(200,"15 percent of 200 is this.","What is 30?"),
+        mk(400,"The square root of 144 is this.","What is 12?"),
+        mk(600,"Three cubed equals this.","What is 27?"),
+        mk(800,"If a $50 item is discounted by 20 percent, the new price is this.","What is $40?"),
+        mk(1000,"The sum of the interior angles of a triangle is this many degrees.","What is 180?", true)
+      ]},
+      {name:'Famous Books', clues:[
+        mk(200,"George Orwell wrote this dystopian novel about Big Brother.","What is 1984?"),
+        mk(400,"This Harper Lee novel centres on Scout Finch.","What is To Kill a Mockingbird?"),
+        mk(600,"Jane Austen wrote this novel featuring Elizabeth Bennet and Mr. Darcy.","What is Pride and Prejudice?"),
+        mk(800,"This Gabriel García Márquez novel chronicles the Buendía family.","What is One Hundred Years of Solitude?"),
+        mk(1000,"This Russian author wrote Crime and Punishment.","Who is Fyodor Dostoevsky?")
+      ]},
+      {name:'Map Brain', clues:[
+        mk(200,"The Nile flows into this sea.","What is the Mediterranean Sea?"),
+        mk(400,"The Andes run along this side of South America.","What is the west?"),
+        mk(600,"The Danube flows through this Austrian capital.","What is Vienna?"),
+        mk(800,"The Gobi Desert lies mainly in Mongolia and this country.","What is China?"),
+        mk(1000,"The Strait of Gibraltar separates Spain from this African country.","What is Morocco?")
+      ]}
+    ],
+    round2:[
+      {name:'Physics-ish', clues:[
+        mk(400,"This unit measures electrical resistance.","What is the ohm?"),
+        mk(800,"Einstein's E = mc² links energy to mass and this constant.","What is the speed of light?"),
+        mk(1200,"This particle carries a negative electric charge.","What is the electron?"),
+        mk(1600,"The tendency of an object to resist a change in motion is called this.","What is inertia?"),
+        mk(2000,"This branch of physics deals with atoms and subatomic particles using probabilities rather than classical certainty.","What is quantum mechanics?")
+      ]},
+      {name:'World History', clues:[
+        mk(400,"The Ottoman Empire captured Constantinople in this year.","What is 1453?"),
+        mk(800,"This French military leader crowned himself emperor in 1804.","Who is Napoleon Bonaparte?"),
+        mk(1200,"The Opium Wars were fought mainly between China and this European power.","What is Britain?"),
+        mk(1600,"This ancient civilization built the city of Tikal.","Who are the Maya?"),
+        mk(2000,"The Congress of Vienna reshaped Europe after the defeat of this leader.","Who is Napoleon Bonaparte?")
+      ]},
+      {name:'Logic & Language', clues:[
+        mk(400,"A statement that contradicts itself yet may reveal a truth is called this.","What is a paradox?"),
+        mk(800,"A reasoning error such as attacking the person instead of the argument is this type of flaw.","What is a logical fallacy?"),
+        mk(1200,"A sentence that uses every letter of the alphabet is called this.","What is a pangram?"),
+        mk(1600,"A word that reads the same forward and backward is called this.","What is a palindrome?", true),
+        mk(2000,"A word or phrase formed by rearranging the letters of another is called this.","What is an anagram?")
+      ]},
+      {name:'The Human Body', clues:[
+        mk(400,"This organ produces insulin.","What is the pancreas?"),
+        mk(800,"The smallest bones in the human body are found in this organ.","What is the ear?"),
+        mk(1200,"The alveoli are found in these organs.","What are the lungs?"),
+        mk(1600,"This blood type is known as the universal donor for red blood cells.","What is O negative?"),
+        mk(2000,"The medulla oblongata helps control involuntary functions including breathing and this vital process.","What is heart rate?")
+      ]},
+      {name:'Art & Architecture', clues:[
+        mk(400,"Leonardo da Vinci painted this portrait.","What is the Mona Lisa?"),
+        mk(800,"This Dutch painter created The Starry Night.","Who is Vincent van Gogh?"),
+        mk(1200,"The architectural style of Notre-Dame de Paris is primarily this.","What is Gothic?"),
+        mk(1600,"This Spanish architect designed the Sagrada Família.","Who is Antoni Gaudí?"),
+        mk(2000,"This art movement associated with Monet focused on light and fleeting visual impressions.","What is Impressionism?")
+      ]},
+      {name:'Hard Geography', clues:[
+        mk(400,"This landlocked African country lies entirely within South Africa.","What is Lesotho?"),
+        mk(800,"The Dardanelles connect the Aegean Sea to this smaller sea.","What is the Sea of Marmara?"),
+        mk(1200,"This country has the exclave of Cabinda separated from its main territory by a strip of the Democratic Republic of the Congo.","What is Angola?"),
+        mk(1600,"Lake Titicaca lies on the border of Peru and this country.","What is Bolivia?"),
+        mk(2000,"This mountain range forms much of the natural border between France and Spain.","What are the Pyrenees?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g19', title:'Home Turf: Canada & North America', blurb:'Canadian cities, provincial symbols, road trips, and North American history and sports.',
+    finalQ:{question:"This province is the only one with both an Atlantic coastline and a land border with the United States.", answer:"What is New Brunswick?"},
+    round1:[
+      {name:'Canadian Cities', clues:[
+        mk(200,"This city is Canada's largest by population.","What is Toronto?"),
+        mk(400,"This Alberta city hosts the Calgary Stampede.","What is Calgary?"),
+        mk(600,"This Quebec city is home to Old Québec and the Château Frontenac.","What is Quebec City?"),
+        mk(800,"This Manitoba capital sits at the meeting of the Red and Assiniboine rivers.","What is Winnipeg?"),
+        mk(1000,"This New Brunswick city is famous for the reversing rapids caused by the Bay of Fundy tides.","What is Saint John?")
+      ]},
+      {name:'Canadian Music', clues:[
+        mk(200,"This singer released the album Jagged Little Pill.","Who is Alanis Morissette?"),
+        mk(400,"This band recorded 'Ahead by a Century.'","Who are The Tragically Hip?"),
+        mk(600,"This Canadian singer released 'Summer of '69.'","Who is Bryan Adams?"),
+        mk(800,"This Toronto rapper's early acting role was on Degrassi.","Who is Drake?"),
+        mk(1000,"This Saskatchewan-born singer-songwriter wrote 'Both Sides, Now.'","Who is Joni Mitchell?")
+      ]},
+      {name:'Provincial Symbols', clues:[
+        mk(200,"The trillium is the official flower of this province.","What is Ontario?"),
+        mk(400,"The wild rose is the official flower of this province.","What is Alberta?"),
+        mk(600,"The Pacific dogwood is the floral emblem of this province.","What is British Columbia?"),
+        mk(800,"The pitcher plant is the provincial flower of this province.","What is Newfoundland and Labrador?"),
+        mk(1000,"The purple violet is the floral emblem of this province.","What is New Brunswick?")
+      ]},
+      {name:'North American Food', clues:[
+        mk(200,"Buffalo wings were created in this New York city.","What is Buffalo?"),
+        mk(400,"Nashville is famous for this spicy style of fried poultry.","What is hot chicken?"),
+        mk(600,"Montreal is known for this dense, hand-rolled style of bagel.","What is a Montreal-style bagel?"),
+        mk(800,"This smoked-meat sandwich is strongly associated with Montreal delis.","What is Montreal smoked meat?"),
+        mk(1000,"This Canadian sweet consists of a crumb base, custard icing and chocolate topping.","What is a Nanaimo bar?", true)
+      ]},
+      {name:'Road Trip', clues:[
+        mk(200,"Route 66 historically connected Chicago with this California city.","What is Los Angeles?"),
+        mk(400,"The Trans-Canada Highway stretches from Victoria to this Newfoundland and Labrador city.","What is St. John's?"),
+        mk(600,"The Pacific Coast Highway is associated with this U.S. state.","What is California?"),
+        mk(800,"The Cabot Trail loops around part of this Nova Scotia island.","What is Cape Breton Island?"),
+        mk(1000,"The Icefields Parkway links Jasper with this Alberta national park town.","What is Banff?")
+      ]},
+      {name:'Canadian Wildlife', clues:[
+        mk(200,"This semiaquatic rodent is one of Canada's national symbols.","What is the beaver?"),
+        mk(400,"This large deer species is common across Canada and has broad palmate antlers.","What is the moose?"),
+        mk(600,"This white bear lives in northern Canada.","What is the polar bear?"),
+        mk(800,"This Arctic whale is nicknamed the sea unicorn.","What is the narwhal?"),
+        mk(1000,"This small burrowing owl species nests on the Prairies.","What is the burrowing owl?")
+      ]}
+    ],
+    round2:[
+      {name:'Canadian History', clues:[
+        mk(400,"Canada became a country through Confederation in this year.","What is 1867?"),
+        mk(800,"This politician served as Canada's first prime minister.","Who is John A. Macdonald?"),
+        mk(1200,"The Canadian Charter of Rights and Freedoms became part of the Constitution in this year.","What is 1982?"),
+        mk(1600,"This battle in 1759 on the Plains of Abraham was part of the Seven Years' War.","What is the Battle of Quebec?"),
+        mk(2000,"This 1917 battle became a major symbol of Canadian military identity during the First World War.","What is the Battle of Vimy Ridge?")
+      ]},
+      {name:'Great North Geography', clues:[
+        mk(400,"This is Canada's longest river.","What is the Mackenzie River?"),
+        mk(800,"This is the largest lake entirely within Canada.","What is Great Bear Lake?"),
+        mk(1200,"This mountain, the highest in Canada, is in Yukon.","What is Mount Logan?"),
+        mk(1600,"This enormous bay is bordered by Ontario, Quebec, Manitoba and Nunavut.","What is Hudson Bay?", true),
+        mk(2000,"This island is Canada's largest and the fifth-largest island in the world.","What is Baffin Island?")
+      ]},
+      {name:'Canadian Inventions', clues:[
+        mk(400,"James Naismith invented this sport.","What is basketball?"),
+        mk(800,"Joseph-Armand Bombardier developed an early commercially successful version of this over-snow vehicle.","What is the snowmobile?"),
+        mk(1200,"Canadian engineer Sandford Fleming promoted the worldwide adoption of these standardized geographic divisions for clocks.","What are time zones?"),
+        mk(1600,"This diabetes treatment was discovered through work by Banting, Best, Collip and Macleod in Toronto.","What is insulin?"),
+        mk(2000,"Reginald Fessenden made pioneering early broadcasts using this medium.","What is radio?")
+      ]},
+      {name:'U.S. Geography', clues:[
+        mk(400,"This is the largest U.S. state by area.","What is Alaska?"),
+        mk(800,"This river forms part of the border between Texas and Mexico.","What is the Rio Grande?"),
+        mk(1200,"This state contains both Yellowstone and Grand Teton national parks.","What is Wyoming?"),
+        mk(1600,"The Everglades are located in this state.","What is Florida?"),
+        mk(2000,"This U.S. state is the only one made entirely of islands.","What is Hawaii?")
+      ]},
+      {name:'Canadian Film & TV', clues:[
+        mk(400,"This sketch-comedy series featured characters including the Chicken Lady and Head Crusher.","What is The Kids in the Hall?"),
+        mk(800,"This long-running Canadian teen franchise began with The Kids of Degrassi Street.","What is Degrassi?"),
+        mk(1200,"This sitcom about a small Saskatchewan town centred on a gas station and diner.","What is Corner Gas?"),
+        mk(1600,"This Canadian mockumentary series follows Ricky, Julian and Bubbles.","What is Trailer Park Boys?"),
+        mk(2000,"This series starring Tatiana Maslany follows a woman who discovers she is one of many clones.","What is Orphan Black?")
+      ]},
+      {name:'North American Sports', clues:[
+        mk(400,"This trophy is awarded to the NHL champion.","What is the Stanley Cup?"),
+        mk(800,"This baseball team ended an 86-year championship drought in 2004.","Who are the Boston Red Sox?"),
+        mk(1200,"This NFL team plays its home games at Lambeau Field.","Who are the Green Bay Packers?"),
+        mk(1600,"This Canadian city hosted the 2010 Winter Olympics.","What is Vancouver?"),
+        mk(2000,"This Mexican baseball stadium is home to the Diablos Rojos del México.","What is Estadio Alfredo Harp Helú?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g20', title:'Best of Game Night', blurb:'Brands, internet culture, snacks, vacation geography, and a hard-finish trivia sprint.',
+    finalQ:{question:"This board game, first published under that name in 1935, asks players to buy properties, build houses and bankrupt their opponents.", answer:"What is Monopoly?"},
+    round1:[
+      {name:'Brands You Know', clues:[
+        mk(200,"This athletic brand uses a swoosh logo.","What is Nike?"),
+        mk(400,"This Swedish furniture company gives many products Scandinavian names.","What is IKEA?"),
+        mk(600,"This streaming service began as a DVD-by-mail company.","What is Netflix?"),
+        mk(800,"This Japanese game company created Mario and Zelda.","What is Nintendo?"),
+        mk(1000,"This luxury fashion house uses an interlocking double-C logo.","What is Chanel?")
+      ]},
+      {name:'Internet Culture', clues:[
+        mk(200,"This image format supports looping animations and is pronounced with either a hard or soft G, depending on whom you ask.","What is GIF?"),
+        mk(400,"Reddit organizes discussions into topic-based communities called these.","What are subreddits?"),
+        mk(600,"A short-lived social media app became famous for six-second looping videos.","What is Vine?"),
+        mk(800,"This term describes the fear of missing out.","What is FOMO?"),
+        mk(1000,"This phrase became shorthand for information being hidden in the replies to a social post.","What is 'the comments' or 'the replies'?")
+      ]},
+      {name:'Snack Drawer', clues:[
+        mk(200,"This sandwich cookie twists apart into two chocolate wafers and a cream centre.","What is an Oreo?"),
+        mk(400,"This triangular corn chip is strongly associated with nacho cheese flavour.","What is a Dorito?"),
+        mk(600,"This candy bar contains caramel, nougat and peanuts under milk chocolate.","What is Snickers?"),
+        mk(800,"This chocolate-covered wafer bar is famous for encouraging people to take a break.","What is KitKat?"),
+        mk(1000,"This Canadian chip flavour combines barbecue, salt and vinegar, sour cream and onion, and ketchup-style notes.","What is all-dressed?")
+      ]},
+      {name:'Vacation Brain', clues:[
+        mk(200,"This Mediterranean island is divided between Greek- and Turkish-speaking communities.","What is Cyprus?"),
+        mk(400,"The Amalfi Coast is in this country.","What is Italy?"),
+        mk(600,"The Maldives lie in this ocean.","What is the Indian Ocean?"),
+        mk(800,"The city of Marrakech is in this country.","What is Morocco?"),
+        mk(1000,"The island of Bora Bora is part of this French overseas collectivity.","What is French Polynesia?", true)
+      ]},
+      {name:'Animal Chaos', clues:[
+        mk(200,"This bird is famous for stealing shiny objects, though the stereotype is stronger than the evidence.","What is a magpie?"),
+        mk(400,"This Australian marsupial is known for its square-shaped droppings.","What is the wombat?"),
+        mk(600,"This marine mammal sleeps while floating and sometimes holds hands with others to avoid drifting apart.","What is a sea otter?"),
+        mk(800,"This mammal's fingerprints are so human-like they can be difficult to distinguish at a glance.","What is a koala?"),
+        mk(1000,"This bird can mimic sounds including camera shutters, chainsaws and other birds.","What is the lyrebird?")
+      ]},
+      {name:'Songs Everyone Knows', clues:[
+        mk(200,"This Journey song became a karaoke staple after its 1981 release.","What is Don't Stop Believin'?"),
+        mk(400,"This Neil Diamond song became a stadium singalong favourite.","What is Sweet Caroline?"),
+        mk(600,"This Whitney Houston song from The Bodyguard became one of the best-selling singles ever.","What is I Will Always Love You?"),
+        mk(800,"This Outkast hit is famous for its repeated title phrase and Polaroid-shaking reference.","What is Hey Ya!?"),
+        mk(1000,"This Killers song has remained a dance-floor staple since 2003.","What is Mr. Brightside?")
+      ]}
+    ],
+    round2:[
+      {name:'Millennial Vocabulary', clues:[
+        mk(400,"This abbreviation means 'be right back.'","What is BRB?"),
+        mk(800,"This abbreviation means 'too long; didn't read.'","What is TL;DR?"),
+        mk(1200,"This internet term describes intense second-hand embarrassment.","What is cringe?"),
+        mk(1600,"This abbreviation means 'in real life.'","What is IRL?"),
+        mk(2000,"This term describes quietly ending communication with someone without explanation.","What is ghosting?")
+      ]},
+      {name:'Name That Decade', clues:[
+        mk(400,"The first moon landing happened in this decade.","What are the 1960s?"),
+        mk(800,"MTV launched in this decade.","What are the 1980s?"),
+        mk(1200,"Google was founded in this decade.","What are the 1990s?"),
+        mk(1600,"The iPhone launched in this decade.","What are the 2000s?"),
+        mk(2000,"TikTok became a global phenomenon in this decade.","What are the 2010s?")
+      ]},
+      {name:'Randomly Specific', clues:[
+        mk(400,"The tiny plastic tip at the end of a shoelace is called this.","What is an aglet?"),
+        mk(800,"The dot over a lowercase i or j is called this.","What is a tittle?"),
+        mk(1200,"The groove between your nose and upper lip is called this.","What is the philtrum?"),
+        mk(1600,"The metal or plastic sleeve that holds an eraser on a pencil is called this.","What is a ferrule?", true),
+        mk(2000,"The earthy smell after rain has this name.","What is petrichor?")
+      ]},
+      {name:'Movie Props', clues:[
+        mk(400,"This fictional metal makes up Captain America's shield in the Marvel Cinematic Universe.","What is vibranium?"),
+        mk(800,"Dorothy's magical shoes in the 1939 film are this colour.","What is ruby red?"),
+        mk(1200,"Indiana Jones searches for this biblical object in Raiders of the Lost Ark.","What is the Ark of the Covenant?"),
+        mk(1600,"The spinning top used by Cobb in Inception serves as this kind of object.","What is a totem?"),
+        mk(2000,"In Pulp Fiction, the contents of this glowing object are never revealed.","What is the briefcase?")
+      ]},
+      {name:'Bar Trivia Geography', clues:[
+        mk(400,"This country has a maple leaf on its flag.","What is Canada?"),
+        mk(800,"The city of Prague is the capital of this country.","What is the Czech Republic or Czechia?"),
+        mk(1200,"Mount Kilimanjaro is in this country.","What is Tanzania?"),
+        mk(1600,"The river Seine flows through this city.","What is Paris?"),
+        mk(2000,"Transylvania is a historical region of this country.","What is Romania?")
+      ]},
+      {name:'Hard Finish', clues:[
+        mk(400,"This element has atomic number 26.","What is iron?"),
+        mk(800,"The longest side of a right triangle is called this.","What is the hypotenuse?"),
+        mk(1200,"This philosopher wrote The Republic.","Who is Plato?"),
+        mk(1600,"The Treaty of Versailles formally ended the state of war between Germany and the Allied Powers after this conflict.","What is World War I?"),
+        mk(2000,"This smallest prime number is also the only even prime.","What is 2?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g1', title:'Y2K Time Machine', blurb:'2000s nostalgia — name the year, iPod era music, snacks, animals, geography, and sports.',
+    finalQ:{question:"This reality competition premiered in 2000 with contestants stranded on an island and voting one another out.", answer:"What is Survivor?"},
+    round1:[
+      {name:'2000s: Name the Year', clues:[
+        mk(200,"Facebook launched from a Harvard dorm, and Mean Girls hit theatres in this year.","What is 2004?"),
+        mk(400,"YouTube launched, The Office debuted in the U.S., and the Xbox 360 arrived in this year.","What is 2005?"),
+        mk(600,"Twitter launched and Pluto was reclassified as a dwarf planet in this year.","What is 2006?"),
+        mk(800,"The first iPhone went on sale and Keeping Up with the Kardashians premiered in this year.","What is 2007?"),
+        mk(1000,"Barack Obama was elected U.S. president and The Dark Knight dominated theatres in this year.","What is 2008?")
+      ]},
+      {name:'iPod Era', clues:[
+        mk(200,"This Apple music player debuted in 2001 with the promise of putting 1,000 songs in your pocket.","What is the iPod?"),
+        mk(400,"This file-sharing service, shut down in its original form in 2001, became synonymous with downloaded MP3s.","What is Napster?"),
+        mk(600,"This Canadian singer's 2002 debut album included 'Complicated' and 'Sk8er Boi.'","Who is Avril Lavigne?"),
+        mk(800,"This duo told everyone to 'Hey Ya!' on a 2003 double album.","Who are Outkast?"),
+        mk(1000,"This British singer's 2006 album Back to Black included 'Rehab.'","Who is Amy Winehouse?")
+      ]},
+      {name:'Snack Attack', clues:[
+        mk(200,"This orange cheese-flavoured snack leaves a famously bright dust on your fingers.","What are Cheetos?"),
+        mk(400,"This Canadian coffee chain is known for Timbits.","What is Tim Hortons?"),
+        mk(600,"This Japanese dish typically combines vinegared rice with seafood, vegetables or other toppings.","What is sushi?"),
+        mk(800,"This Italian dessert literally means 'pick me up' and is made with coffee-soaked ladyfingers.","What is tiramisu?", true),
+        mk(1000,"This French mother sauce is made by thickening milk with a white roux.","What is béchamel?")
+      ]},
+      {name:'Animal Instincts', clues:[
+        mk(200,"This is the largest living cat species.","What is the tiger?"),
+        mk(400,"A group of these black-and-white birds is called a waddle on land.","What are penguins?"),
+        mk(600,"This marine mammal is the only one known to use stones as anvils to crack shellfish regularly.","What is the sea otter?"),
+        mk(800,"This African mammal has the longest gestation period of any land animal, about 22 months.","What is the elephant?"),
+        mk(1000,"This tiny mammal is the only one capable of true sustained flight.","What is a bat?")
+      ]},
+      {name:'Around the World', clues:[
+        mk(200,"The Eiffel Tower stands in this capital city.","What is Paris?"),
+        mk(400,"Machu Picchu is found in this South American country.","What is Peru?"),
+        mk(600,"Petra, famous for rock-cut architecture, is in this Middle Eastern country.","What is Jordan?"),
+        mk(800,"The ancient city of Dubrovnik sits on the Adriatic coast of this country.","What is Croatia?"),
+        mk(1000,"Bhutan's capital, one of the world's few capitals without traffic lights, is this city.","What is Thimphu?")
+      ]},
+      {name:'Sports Bar', clues:[
+        mk(200,"A touchdown is worth this many points before the conversion attempt.","What is 6?"),
+        mk(400,"In tennis, this word means a score of zero.","What is love?"),
+        mk(600,"The Toronto Raptors won their first NBA championship in this year.","What is 2019?"),
+        mk(800,"This country won the men's FIFA World Cup in 2022.","What is Argentina?"),
+        mk(1000,"In baseball, an immaculate inning means striking out 3 batters on exactly this many pitches.","What is 9?")
+      ]}
+    ],
+    round2:[
+      {name:'TRL Throwbacks', clues:[
+        mk(400,"This boy band featured Justin Timberlake, JC Chasez, Joey Fatone, Lance Bass and Chris Kirkpatrick.","Who are *NSYNC?"),
+        mk(800,"Beyoncé, Kelly Rowland and Michelle Williams made up this trio's best-known lineup.","Who are Destiny's Child?"),
+        mk(1200,"This singer released The Emancipation of Mimi in 2005.","Who is Mariah Carey?"),
+        mk(1600,"This band fronted by Brandon Flowers released 'Mr. Brightside.'","Who are The Killers?"),
+        mk(2000,"This 2000 Britney Spears hit begins with a spoken 'I think I did it again.'","What is 'Oops!... I Did It Again'?")
+      ]},
+      {name:'Blockbuster 2000s', clues:[
+        mk(400,"This 2001 fantasy film introduced moviegoers to Hogwarts.","What is Harry Potter and the Philosopher's Stone?"),
+        mk(800,"In this 2003 Pixar film, a clownfish crosses the ocean looking for his son.","What is Finding Nemo?"),
+        mk(1200,"This 2006 fashion comedy has Meryl Streep running Runway magazine.","What is The Devil Wears Prada?"),
+        mk(1600,"This 2009 James Cameron film takes place largely on Pandora.","What is Avatar?", true),
+        mk(2000,"This 2007 Coen brothers film won Best Picture and features the relentless Anton Chigurh.","What is No Country for Old Men?")
+      ]},
+      {name:'Internet Before TikTok', clues:[
+        mk(400,"This early social network let users rank friends in a famous Top 8.","What is Myspace?"),
+        mk(800,"This instant-messaging service from AOL was commonly shortened to AIM.","What is AOL Instant Messenger?"),
+        mk(1200,"This blogging platform launched in 2007 and became known for fandoms, GIFs and reblogs.","What is Tumblr?"),
+        mk(1600,"This 2005 viral video featured two young men lip-syncing to a Romanian pop song.","What is 'Numa Numa'?"),
+        mk(2000,"This Flash-era website was famous for cartoons like Strong Bad Email.","What is Homestar Runner?")
+      ]},
+      {name:'Canadian Things', clues:[
+        mk(400,"This city is home to the CN Tower.","What is Toronto?"),
+        mk(800,"This national park in Alberta includes Lake Louise.","What is Banff National Park?"),
+        mk(1200,"This singer from Stratford, Ontario broke out internationally with 'Baby.'","Who is Justin Bieber?", true),
+        mk(1600,"This Canadian invention combines fries, cheese curds and gravy.","What is poutine?"),
+        mk(2000,"This territory has Iqaluit as its capital.","What is Nunavut?")
+      ]},
+      {name:'Science You Know', clues:[
+        mk(400,"Water freezes at this temperature on the Celsius scale.","What is 0°C?"),
+        mk(800,"This planet is known for its prominent ring system.","What is Saturn?"),
+        mk(1200,"The chemical symbol Au stands for this element.","What is gold?"),
+        mk(1600,"This part of the cell contains most of its genetic material in eukaryotes.","What is the nucleus?"),
+        mk(2000,"This force keeps planets in orbit around the Sun.","What is gravity?")
+      ]},
+      {name:'Before & After', clues:[
+        mk(400,"A Jennifer Aniston sitcom plus the low places Garth Brooks sings about.","What is Friends in Low Places?"),
+        mk(800,"A Pixar fish-searching movie plus the famous Roman amphitheatre.","What is Finding Nemo Colosseum?"),
+        mk(1200,"The Queen biopic plus the 1975 cult musical featuring Dr. Frank-N-Furter.","What is Bohemian Rhapsody Horror Picture Show?"),
+        mk(1600,"A Taylor Swift album plus the road Dorothy follows in Oz.","What is Red Brick Road?"),
+        mk(2000,"The HBO fantasy series plus a classic board game of buying properties.","What is Game of Thrones Monopoly?")
+      ]}
+    ]
+  },
+  {
+    id:'g2', title:'Crowd Pleasers', blurb:'A broad, easygoing mix — bands, world food, movie quotes, animals, and championship trivia.',
+    finalQ:{question:"Completed in 1931, this New York skyscraper held the title of world's tallest building for about four decades.", answer:"What is the Empire State Building?"},
+    round1:[
+      {name:'Name That Band', clues:[
+        mk(200,"Freddie Mercury fronted this British rock band.","Who are Queen?"),
+        mk(400,"Dave Grohl founded this band after Nirvana ended.","Who are Foo Fighters?"),
+        mk(600,"Hayley Williams is the lead singer of this band.","Who are Paramore?"),
+        mk(800,"Alex Turner fronts this Sheffield rock band behind 'Do I Wanna Know?'","Who are Arctic Monkeys?"),
+        mk(1000,"Julian Casablancas fronts this New York band behind 'Last Nite.'","Who are The Strokes?")
+      ]},
+      {name:'World Eats', clues:[
+        mk(200,"Paella is strongly associated with this country.","What is Spain?"),
+        mk(400,"Pad thai comes from this Southeast Asian country.","What is Thailand?"),
+        mk(600,"Pierogi are dumplings strongly associated with this Central European country.","What is Poland?"),
+        mk(800,"Injera is a spongy flatbread central to the cuisine of this East African country.","What is Ethiopia?"),
+        mk(1000,"Feijoada, a black-bean stew, is considered a national dish of this country.","What is Brazil?")
+      ]},
+      {name:'Big Screen Quotes — Without the Quote', clues:[
+        mk(200,"This 1997 film centres on Jack and Rose aboard a doomed liner.","What is Titanic?"),
+        mk(400,"This 2004 comedy introduced the Plastics at North Shore High.","What is Mean Girls?"),
+        mk(600,"This 1993 dinosaur blockbuster takes place on Isla Nublar.","What is Jurassic Park?", true),
+        mk(800,"This 1999 sci-fi film asks whether reality is a computer simulation.","What is The Matrix?"),
+        mk(1000,"This 2007 comedy follows two teens trying to buy alcohol for a party before graduation.","What is Superbad?")
+      ]},
+      {name:'Creature Feature', clues:[
+        mk(200,"This is the fastest land animal.","What is the cheetah?"),
+        mk(400,"This marsupial is native to Australia and eats mostly eucalyptus leaves.","What is the koala?"),
+        mk(600,"This bird is the largest living bird by height and weight.","What is the ostrich?"),
+        mk(800,"This reptile can detach its tail to escape predators, a trait common among many species.","What is a lizard?"),
+        mk(1000,"This deep-sea fish uses a bioluminescent lure dangling in front of its mouth.","What is the anglerfish?")
+      ]},
+      {name:'Airport Codes', clues:[
+        mk(200,"YYZ serves this Canadian city.","What is Toronto?"),
+        mk(400,"LAX serves this U.S. city.","What is Los Angeles?"),
+        mk(600,"CDG serves this European capital.","What is Paris?"),
+        mk(800,"NRT is one of the major airports serving this Japanese metropolis.","What is Tokyo?"),
+        mk(1000,"DXB serves this city in the United Arab Emirates.","What is Dubai?")
+      ]},
+      {name:'Championship Stuff', clues:[
+        mk(200,"The Stanley Cup is awarded in this sport.","What is hockey?"),
+        mk(400,"Wimbledon is one of the four majors in this sport.","What is tennis?"),
+        mk(600,"The Vince Lombardi Trophy goes to the winner of this game.","What is the Super Bowl?"),
+        mk(800,"The yellow jersey in the Tour de France is worn by the rider leading this classification.","What is the general classification?"),
+        mk(1000,"The Claret Jug is awarded to the winner of this golf major.","What is The Open Championship?")
+      ]}
+    ],
+    round2:[
+      {name:'Albums of the 2010s', clues:[
+        mk(400,"Adele's album containing 'Rolling in the Deep' has this numeric title.","What is 21?"),
+        mk(800,"Kendrick Lamar released this 2015 album featuring 'Alright.'","What is To Pimp a Butterfly?"),
+        mk(1200,"Lorde's 2013 debut album was titled this.","What is Pure Heroine?"),
+        mk(1600,"Daft Punk's 2013 album featuring 'Get Lucky' had this title.","What is Random Access Memories?"),
+        mk(2000,"Frank Ocean's 2016 album whose cover shows him with green hair is this.","What is Blonde?")
+      ]},
+      {name:'Flags & Capitals', clues:[
+        mk(400,"A red maple leaf appears on the flag of this country.","What is Canada?"),
+        mk(800,"The capital of Australia is this inland city, not Sydney or Melbourne.","What is Canberra?"),
+        mk(1200,"This Nordic country's flag is blue with a white cross, and its capital is Helsinki.","What is Finland?"),
+        mk(1600,"This country's capital is Ljubljana.","What is Slovenia?"),
+        mk(2000,"This African country's capital is Gaborone.","What is Botswana?")
+      ]},
+      {name:'Cooking Terms', clues:[
+        mk(400,"To cut food into very small cubes is to do this.","What is dice?"),
+        mk(800,"Cooking food slowly in liquid just below a boil is this technique.","What is simmering?"),
+        mk(1200,"This French term means to prepare all ingredients before cooking begins.","What is mise en place?", true),
+        mk(1600,"Cooking meat quickly in a small amount of hot fat is this technique.","What is sautéing?"),
+        mk(2000,"This method cooks vacuum-sealed food in a precisely controlled water bath.","What is sous vide?")
+      ]},
+      {name:'TV Binge', clues:[
+        mk(400,"This sitcom follows employees at the Scranton branch of Dunder Mifflin.","What is The Office?"),
+        mk(800,"This HBO series begins with the death of Jon Arryn and a royal visit to Winterfell.","What is Game of Thrones?"),
+        mk(1200,"This series follows a chemistry teacher who becomes a meth manufacturer.","What is Breaking Bad?"),
+        mk(1600,"This comedy stars Jason Sudeikis as an American coach hired by AFC Richmond.","What is Ted Lasso?"),
+        mk(2000,"This series set at Lumon Industries separates employees' work and personal memories.","What is Severance?")
+      ]},
+      {name:'Body Language', clues:[
+        mk(400,"The largest organ of the human body is this.","What is the skin?"),
+        mk(800,"This chamber of the heart pumps oxygenated blood into the aorta.","What is the left ventricle?"),
+        mk(1200,"The femur is found in this part of the body.","What is the thigh?"),
+        mk(1600,"These tiny air sacs in the lungs are where gas exchange occurs.","What are alveoli?"),
+        mk(2000,"This part of the brain plays a major role in balance and coordination.","What is the cerebellum?")
+      ]},
+      {name:'Word Origins', clues:[
+        mk(400,"This word for a sandwich takes its name from an English noble title.","What is sandwich?"),
+        mk(800,"The word 'robot' came into English from a 1920 Czech play and derives from a word meaning forced labour.","What is robot?"),
+        mk(1200,"This everyday word for a denim fabric comes from a French phrase meaning 'from Nîmes.'","What is denim?"),
+        mk(1600,"This word for a person who boycotts comes from the surname of an Irish land agent.","What is boycott?"),
+        mk(2000,"This word meaning a sudden fear comes from the Greek god Pan.","What is panic?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g3', title:'Music, Movies & More', blurb:'One-hit wonders, pizza, wild animals, Oscar winners, and space trivia in one board.',
+    finalQ:{question:"At the 1969 Woodstock festival, this guitarist delivered a famous solo interpretation of 'The Star-Spangled Banner.'", answer:"Who is Jimi Hendrix?"},
+    round1:[
+      {name:'One-Hit Wonders-ish', clues:[
+        mk(200,"This band had a massive hit with 'Somebody That I Used to Know.'","Who is Gotye?"),
+        mk(400,"This Norwegian trio is best known internationally for 'Take on Me.'","Who are a-ha?"),
+        mk(600,"This group sang the 1997 hit 'Tubthumping.'","Who are Chumbawamba?"),
+        mk(800,"This Australian singer broke through with 'Torn' in 1997.","Who is Natalie Imbruglia?"),
+        mk(1000,"This duo recorded the 2012 hit 'Safe and Sound.'","Who are Capital Cities?")
+      ]},
+      {name:'Pizza Planet', clues:[
+        mk(200,"This cheese is the classic base for a Margherita pizza.","What is mozzarella?"),
+        mk(400,"This Italian city is widely regarded as the birthplace of modern pizza.","What is Naples?"),
+        mk(600,"A traditional Margherita features tomato, mozzarella and this herb.","What is basil?"),
+        mk(800,"This folded pizza is essentially a sealed turnover filled with cheese and other toppings.","What is a calzone?"),
+        mk(1000,"This spicy spreadable sausage from Calabria is often used as a pizza topping.","What is 'nduja?")
+      ]},
+      {name:'Wild World', clues:[
+        mk(200,"This animal is the tallest living land animal.","What is the giraffe?"),
+        mk(400,"This mammal lays eggs and has a duck-like bill.","What is the platypus?"),
+        mk(600,"A narwhal's famous tusk is actually an elongated version of this body part.","What is a tooth?"),
+        mk(800,"This primate is the largest living ape.","What is the gorilla?"),
+        mk(1000,"This bird can hover and is the only bird capable of sustained backward flight.","What is the hummingbird?", true)
+      ]},
+      {name:'Passport Stamps', clues:[
+        mk(200,"The Sagrada Família is in this Spanish city.","What is Barcelona?"),
+        mk(400,"Angkor Wat is in this Southeast Asian country.","What is Cambodia?"),
+        mk(600,"The Blue Lagoon geothermal spa is in this Nordic island country.","What is Iceland?"),
+        mk(800,"The ancient city of Ephesus is in this modern country.","What is Türkiye?"),
+        mk(1000,"The Okavango Delta is primarily in this southern African country.","What is Botswana?")
+      ]},
+      {name:'Ball Is Life', clues:[
+        mk(200,"The NBA shot clock gives a team this many seconds to attempt a shot.","What is 24?"),
+        mk(400,"A triple-double means reaching double digits in this many statistical categories in one game.","What is 3?"),
+        mk(600,"This player is nicknamed 'King James.'","Who is LeBron James?"),
+        mk(800,"This Canadian was the first overall pick in the 2014 NBA Draft.","Who is Andrew Wiggins?"),
+        mk(1000,"This Hall of Famer scored 100 points in a single NBA game in 1962.","Who is Wilt Chamberlain?")
+      ]},
+      {name:'Streaming Era', clues:[
+        mk(200,"This Netflix series follows Wednesday Addams at Nevermore Academy.","What is Wednesday?"),
+        mk(400,"The Roy family battles for control of Waystar Royco in this HBO drama.","What is Succession?"),
+        mk(600,"This series stars Jeremy Allen White as chef Carmen Berzatto.","What is The Bear?"),
+        mk(800,"This dystopian Netflix series begins with hundreds of debt-ridden players entering deadly children's games.","What is Squid Game?"),
+        mk(1000,"This Apple TV+ sci-fi drama stars Rebecca Ferguson as Juliette Nichols in an underground community.","What is Silo?")
+      ]}
+    ],
+    round2:[
+      {name:'Rock Legends', clues:[
+        mk(400,"This band's 1977 album Rumours featured 'Dreams.'","Who are Fleetwood Mac?"),
+        mk(800,"This guitarist played 'Purple Haze' at Monterey and later headlined Woodstock.","Who is Jimi Hendrix?"),
+        mk(1200,"This band's 1991 album Nevermind helped push grunge into the mainstream.","Who are Nirvana?"),
+        mk(1600,"This Pink Floyd album famously features a prism on its cover.","What is The Dark Side of the Moon?"),
+        mk(2000,"This 1975 Bruce Springsteen album includes the title track and 'Thunder Road.'","What is Born to Run?")
+      ]},
+      {name:'Global Capitals', clues:[
+        mk(400,"This is the capital of New Zealand.","What is Wellington?"),
+        mk(800,"This is the capital of Morocco.","What is Rabat?"),
+        mk(1200,"This is the capital of Mongolia.","What is Ulaanbaatar?"),
+        mk(1600,"This is the capital of Uruguay.","What is Montevideo?"),
+        mk(2000,"This is the capital of Kyrgyzstan.","What is Bishkek?", true)
+      ]},
+      {name:'Sauce Boss', clues:[
+        mk(400,"This emulsified sauce is made from egg yolk and oil, often with lemon juice or vinegar.","What is mayonnaise?"),
+        mk(800,"This green Italian sauce typically contains basil, pine nuts, garlic, Parmesan and olive oil.","What is pesto?"),
+        mk(1200,"This North African hot chilli paste commonly includes red peppers and spices.","What is harissa?"),
+        mk(1600,"This Japanese sauce is a thick, savoury condiment commonly served with tonkatsu.","What is tonkatsu sauce?"),
+        mk(2000,"This French mother sauce begins with brown stock thickened traditionally with brown roux.","What is espagnole?")
+      ]},
+      {name:'Oscar Winners', clues:[
+        mk(400,"This 1994 film about a man who runs across America won Best Picture.","What is Forrest Gump?"),
+        mk(800,"This 2006 crime film directed by Martin Scorsese won Best Picture.","What is The Departed?"),
+        mk(1200,"This 2019 South Korean film became the first non-English-language film to win Best Picture.","What is Parasite?"),
+        mk(1600,"This 2014 film starring Michael Keaton won Best Picture.","What is Birdman?"),
+        mk(2000,"This 2007 film directed by the Coen brothers won Best Picture.","What is No Country for Old Men?")
+      ]},
+      {name:'Space Stuff', clues:[
+        mk(400,"This planet is closest to the Sun.","What is Mercury?"),
+        mk(800,"This dwarf planet lies in the Kuiper Belt and was once classified as the ninth planet.","What is Pluto?"),
+        mk(1200,"This galaxy contains our Solar System.","What is the Milky Way?"),
+        mk(1600,"This moon of Saturn is known for lakes of liquid methane and ethane.","What is Titan?"),
+        mk(2000,"This boundary around a black hole marks the point beyond which nothing can escape.","What is the event horizon?")
+      ]},
+      {name:'Before & After Again', clues:[
+        mk(400,"A Beatles album plus the road where Sherlock Holmes lives.","What is Abbey Road Baker Street?"),
+        mk(800,"A Netflix royal drama plus the jewel-wearing headpiece of a monarch.","What is The Crown jewel?"),
+        mk(1200,"A Spielberg shark movie plus a classic board game about real estate.","What is Jaws Monopoly?"),
+        mk(1600,"A Beyoncé album plus the citrus drink sold by the glass.","What is Lemonade stand?", true),
+        mk(2000,"A TV chemistry teacher plus the dance move made famous by Michael Jackson.","What is Walter White moonwalk?")
+      ]}
+    ]
+  },
+  {
+    id:'g4', title:'Oh, Canada!', blurb:'Canadian geography, 90s kids nostalgia, fast food, Olympic moments, and Canadian music.',
+    finalQ:{question:"This document, patriated in 1982, includes the Canadian Charter of Rights and Freedoms.", answer:"What is the Constitution Act, 1982?"},
+    round1:[
+      {name:'Canadian Geography', clues:[
+        mk(200,"This province is home to Vancouver.","What is British Columbia?"),
+        mk(400,"This city is the capital of Alberta.","What is Edmonton?"),
+        mk(600,"This bay, famous for extreme tides, lies between New Brunswick and Nova Scotia.","What is the Bay of Fundy?"),
+        mk(800,"This Ontario city sits at the western end of Lake Ontario and is known for its steel industry.","What is Hamilton?"),
+        mk(1000,"This is Canada's smallest province by land area.","What is Prince Edward Island?")
+      ]},
+      {name:'90s Kids', clues:[
+        mk(200,"This virtual pet toy became a playground craze in the late 1990s.","What is Tamagotchi?"),
+        mk(400,"This TV series followed six friends living in New York City.","What is Friends?"),
+        mk(600,"This Nintendo handheld debuted in North America in 1989 and dominated the 1990s.","What is the Game Boy?"),
+        mk(800,"This 1996 movie starred Michael Jordan alongside Bugs Bunny.","What is Space Jam?"),
+        mk(1000,"This Nickelodeon cartoon followed babies Tommy, Chuckie, Phil, Lil and Angelica.","What is Rugrats?")
+      ]},
+      {name:'Fast Food Facts', clues:[
+        mk(200,"The Big Mac is sold by this chain.","What is McDonald's?"),
+        mk(400,"This chain is famous for a square hamburger called the Dave's Single.","What is Wendy's?"),
+        mk(600,"The Whopper belongs to this burger chain.","What is Burger King?"),
+        mk(800,"This chain's original chicken sandwich is served on a buttered bun with pickles.","What is Chick-fil-A?", true),
+        mk(1000,"This Mexican-inspired chain introduced the Crunchwrap Supreme in the mid-2000s.","What is Taco Bell?")
+      ]},
+      {name:'Animal Groups', clues:[
+        mk(200,"A group of lions is called this.","What is a pride?"),
+        mk(400,"A group of wolves is commonly called this.","What is a pack?"),
+        mk(600,"A group of crows is traditionally called this ominous term.","What is a murder?"),
+        mk(800,"A group of flamingos can be called this colourful-sounding term.","What is a flamboyance?"),
+        mk(1000,"A group of rhinoceroses is called this.","What is a crash?")
+      ]},
+      {name:'Olympic Moments', clues:[
+        mk(200,"The Summer Olympics are normally held every this many years.","What is 4?"),
+        mk(400,"This Jamaican sprinter won Olympic gold in both the 100m and 200m at three consecutive Games.","Who is Usain Bolt?"),
+        mk(600,"This Canadian city hosted the 2010 Winter Olympics.","What is Vancouver?"),
+        mk(800,"This gymnast became the first woman to land a Yurchenko double pike in competition.","Who is Simone Biles?"),
+        mk(1000,"This swimmer won a record 23 Olympic gold medals.","Who is Michael Phelps?")
+      ]},
+      {name:"That's a Landmark", clues:[
+        mk(200,"The Colosseum is in this city.","What is Rome?"),
+        mk(400,"Christ the Redeemer overlooks this Brazilian city.","What is Rio de Janeiro?"),
+        mk(600,"The Burj Khalifa rises over this city.","What is Dubai?"),
+        mk(800,"The Moai statues are found on this remote Chilean island.","What is Easter Island (Rapa Nui)?"),
+        mk(1000,"The Alhambra palace complex is in this Spanish city.","What is Granada?")
+      ]}
+    ],
+    round2:[
+      {name:'Canadian Music', clues:[
+        mk(400,"This Canadian singer released the albums Jagged Little Pill and Supposed Former Infatuation Junkie.","Who is Alanis Morissette?"),
+        mk(800,"This Toronto rapper's album Take Care won the Grammy for Best Rap Album.","Who is Drake?"),
+        mk(1200,"This Saskatchewan-born singer had a global hit with 'Man! I Feel Like a Woman!'","Who is Shania Twain?"),
+        mk(1600,"Win Butler and Régine Chassagne helped found this Montreal indie-rock band.","Who are Arcade Fire?"),
+        mk(2000,"This Canadian band released Fully Completely and 'Ahead by a Century.'","Who are The Tragically Hip?")
+      ]},
+      {name:'Great Lakes', clues:[
+        mk(400,"This is the largest Great Lake by surface area.","What is Lake Superior?"),
+        mk(800,"Toronto sits on the northwestern shore of this Great Lake.","What is Lake Ontario?"),
+        mk(1200,"This is the only Great Lake located entirely within the United States.","What is Lake Michigan?"),
+        mk(1600,"Detroit lies on the river connecting Lake St. Clair with this Great Lake.","What is Lake Erie?"),
+        mk(2000,"This Great Lake drains into Lake Erie through the St. Clair River, Lake St. Clair and Detroit River system.","What is Lake Huron?")
+      ]},
+      {name:'Cocktail Hour', clues:[
+        mk(400,"A classic mimosa combines sparkling wine with this juice.","What is orange juice?"),
+        mk(800,"A Moscow Mule is traditionally served in a mug made from this metal.","What is copper?"),
+        mk(1200,"A Negroni contains gin, sweet vermouth and this bitter red aperitif.","What is Campari?", true),
+        mk(1600,"A French 75 combines gin, lemon, sugar and this sparkling wine.","What is Champagne?"),
+        mk(2000,"The classic Last Word uses equal parts gin, lime, maraschino liqueur and this green herbal liqueur.","What is green Chartreuse?")
+      ]},
+      {name:'Sitcom Deep Cuts', clues:[
+        mk(400,"This Friends character works as a paleontologist.","Who is Ross Geller?"),
+        mk(800,"On The Office, this is the name of Dwight Schrute's beet farm.","What is Schrute Farms?"),
+        mk(1200,"This sitcom features the bar Paddy's Pub.","What is It's Always Sunny in Philadelphia?"),
+        mk(1600,"This Parks and Recreation character is obsessed with breakfast food and friendship.","Who is Leslie Knope?"),
+        mk(2000,"In Arrested Development, the family business is based in this fictional California county.","What is Orange County?")
+      ]},
+      {name:'Science, Basically', clues:[
+        mk(400,"DNA stands for this.","What is deoxyribonucleic acid?"),
+        mk(800,"This gas makes up most of Earth's atmosphere.","What is nitrogen?"),
+        mk(1200,"A substance with a pH below 7 is generally classified as this.","What is acidic?"),
+        mk(1600,"This organelle is often called the powerhouse of the cell.","What is the mitochondrion?"),
+        mk(2000,"This law states that every action has an equal and opposite reaction.","What is Newton's Third Law?")
+      ]},
+      {name:'Odd Words', clues:[
+        mk(400,"This word means a fear of confined spaces.","What is claustrophobia?"),
+        mk(800,"This adjective means relating to the moon.","What is lunar?"),
+        mk(1200,"This word describes something that happens every two years.","What is biennial?"),
+        mk(1600,"This term means a word formed from the initial letters of a phrase, like NASA.","What is an acronym?"),
+        mk(2000,"This word means using more words than necessary to express an idea.","What is circumlocution?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g5', title:'Eat, Drink & Explore', blurb:'Italy deep dive, pasta shapes, world cuisine, wine and cheese, and national parks.',
+    finalQ:{question:"According to the best-known origin story, this portable meal was named for John Montagu, the 4th Earl of the same title.", answer:"What is the sandwich?"},
+    round1:[
+      {name:'Around Italy', clues:[
+        mk(200,"This city is home to the Colosseum.","What is Rome?"),
+        mk(400,"This city is famous for canals and gondolas.","What is Venice?"),
+        mk(600,"The Uffizi Gallery is in this Tuscan city.","What is Florence?"),
+        mk(800,"Mount Vesuvius overlooks this southern Italian city.","What is Naples?"),
+        mk(1000,"This island is the largest in the Mediterranean Sea.","What is Sicily?")
+      ]},
+      {name:'Pasta Shapes', clues:[
+        mk(200,"This long, thin pasta is perhaps the most familiar noodle shape.","What is spaghetti?"),
+        mk(400,"This pasta's name means 'little ears.'","What is orecchiette?"),
+        mk(600,"This tube-shaped pasta has diagonal-cut ends.","What is penne?"),
+        mk(800,"This corkscrew-shaped pasta takes its name from 'fusilli.'","What is fusilli?"),
+        mk(1000,"This wide ribbon pasta from Tuscany is thicker than tagliatelle.","What is pappardelle?")
+      ]},
+      {name:'Animal Adaptations', clues:[
+        mk(200,"A camel stores fat, not water, in this body feature.","What is its hump?"),
+        mk(400,"A chameleon is famous for changing this aspect of its skin.","What is colour?"),
+        mk(600,"A porcupine defends itself with modified hairs called these.","What are quills?", true),
+        mk(800,"This Arctic mammal's black skin under translucent fur helps absorb heat.","What is the polar bear?"),
+        mk(1000,"This fish can inflate its body dramatically when threatened.","What is the pufferfish?")
+      ]},
+      {name:'Vacation Mode', clues:[
+        mk(200,"Cancún is a resort city in this country.","What is Mexico?"),
+        mk(400,"Bali is an island province of this country.","What is Indonesia?"),
+        mk(600,"Santorini belongs to this country.","What is Greece?"),
+        mk(800,"The Amalfi Coast is in this country.","What is Italy?"),
+        mk(1000,"Zanzibar is a semi-autonomous archipelago belonging to this East African country.","What is Tanzania?")
+      ]},
+      {name:'Sports Nicknames', clues:[
+        mk(200,"'The Great One' refers to this hockey legend.","Who is Wayne Gretzky?"),
+        mk(400,"'Air Jordan' refers to this NBA legend.","Who is Michael Jordan?"),
+        mk(600,"'The Big Unit' was the nickname of this 6-foot-10 MLB pitcher.","Who is Randy Johnson?"),
+        mk(800,"'The Golden Bear' is the nickname of this golfer.","Who is Jack Nicklaus?"),
+        mk(1000,"'The Manassa Mauler' was the nickname of this heavyweight boxing champion.","Who is Jack Dempsey?")
+      ]},
+      {name:'Movie Soundtracks', clues:[
+        mk(200,"'My Heart Will Go On' is associated with this film.","What is Titanic?"),
+        mk(400,"'Lose Yourself' was written for and featured in this Eminem film.","What is 8 Mile?"),
+        mk(600,"'Shallow' is performed in this 2018 film.","What is A Star Is Born?"),
+        mk(800,"'I Don't Want to Miss a Thing' is tied to this 1998 asteroid movie.","What is Armageddon?"),
+        mk(1000,"'Mrs. Robinson' is prominently associated with this 1967 film.","What is The Graduate?")
+      ]}
+    ],
+    round2:[
+      {name:'World Cuisine', clues:[
+        mk(400,"Pho is most closely associated with this country.","What is Vietnam?"),
+        mk(800,"Ceviche is strongly associated with this South American country, which recognizes it as national heritage.","What is Peru?"),
+        mk(1200,"Khachapuri is a cheese-filled bread from this Caucasus country.","What is Georgia?"),
+        mk(1600,"Bunny chow, a hollowed loaf filled with curry, originated in this country.","What is South Africa?"),
+        mk(2000,"Nasi goreng is a fried-rice dish strongly associated with this country.","What is Indonesia?")
+      ]},
+      {name:'Wine & Cheese', clues:[
+        mk(400,"Champagne can legally carry that name when produced in the Champagne region of this country.","What is France?"),
+        mk(800,"Parmigiano Reggiano originates in this country.","What is Italy?"),
+        mk(1200,"Malbec is particularly associated today with this South American country.","What is Argentina?"),
+        mk(1600,"Manchego cheese is made traditionally from sheep's milk in this country.","What is Spain?"),
+        mk(2000,"Tokaji wine comes from a historic wine region in this Central European country.","What is Hungary?")
+      ]},
+      {name:'National Parks', clues:[
+        mk(400,"Old Faithful is in this U.S. national park.","What is Yellowstone?"),
+        mk(800,"Banff National Park lies in this Canadian province.","What is Alberta?"),
+        mk(1200,"Half Dome is a landmark of this California national park.","What is Yosemite?"),
+        mk(1600,"Torres del Paine National Park is in this South American country.","What is Chile?", true),
+        mk(2000,"Fiordland National Park, home to Milford Sound, is in this country.","What is New Zealand?")
+      ]},
+      {name:'Kitchen Science', clues:[
+        mk(400,"Yeast causes bread dough to rise by producing this gas.","What is carbon dioxide?"),
+        mk(800,"This reaction between amino acids and reducing sugars creates browning and complex flavours in seared food.","What is the Maillard reaction?"),
+        mk(1200,"An emulsion combines two liquids that normally do not mix, such as oil and this common liquid.","What is water?"),
+        mk(1600,"When sugar is heated until it browns and develops deeper flavours, this process occurs.","What is caramelization?"),
+        mk(2000,"This protein network gives wheat dough elasticity and structure.","What is gluten?")
+      ]},
+      {name:'Great Migrations', clues:[
+        mk(400,"Monarch butterflies migrate in huge numbers to overwinter mainly in this country.","What is Mexico?"),
+        mk(800,"Wildebeest famously migrate across Tanzania and this neighbouring country.","What is Kenya?"),
+        mk(1200,"Many Pacific salmon return from the ocean to this type of waterway to spawn.","What is a freshwater river/stream?"),
+        mk(1600,"Arctic terns travel between Arctic breeding grounds and this polar region each year.","What is Antarctica?"),
+        mk(2000,"Christmas Island is famous for the mass migration of millions of these crustaceans.","What are red crabs?")
+      ]},
+      {name:'Geography Superlatives', clues:[
+        mk(400,"This is the largest country in the world by area.","What is Russia?"),
+        mk(800,"This is the world's largest ocean.","What is the Pacific Ocean?"),
+        mk(1200,"This is the highest mountain above sea level.","What is Mount Everest?"),
+        mk(1600,"This is the smallest sovereign state by area.","What is Vatican City?"),
+        mk(2000,"This trench contains the deepest known point in Earth's oceans.","What is the Mariana Trench?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g6', title:'The 2000s — Full Decade Edition', blurb:'A second full 2000s board — TV, music, tech, movies, sports, slang, and headlines of the decade.',
+    finalQ:{question:"In 2007, this author released the seventh and final main novel in the original Harry Potter series.", answer:"Who is J. K. Rowling?"},
+    round1:[
+      {name:'2000s TV', clues:[
+        mk(200,"This reality show put aspiring singers before judges Simon Cowell, Paula Abdul and Randy Jackson.","What is American Idol?"),
+        mk(400,"This teen drama began with Ryan Atwood moving to wealthy Newport Beach.","What is The O.C.?"),
+        mk(600,"This medical drama introduced Meredith Grey at Seattle Grace Hospital in 2005.","What is Grey's Anatomy?"),
+        mk(800,"This mockumentary sitcom debuted in the U.S. in 2005 at Dunder Mifflin.","What is The Office?"),
+        mk(1000,"This supernatural drama followed brothers Sam and Dean Winchester.","What is Supernatural?")
+      ]},
+      {name:'2000s Music', clues:[
+        mk(200,"This singer released 'Crazy in Love' in 2003.","Who is Beyoncé?"),
+        mk(400,"This band released 'In the End' on its debut album Hybrid Theory.","Who are Linkin Park?"),
+        mk(600,"This singer's 2006 album FutureSex/LoveSounds included 'SexyBack.'","Who is Justin Timberlake?"),
+        mk(800,"This duo released 'The Way You Move' and 'Hey Ya!' on Speakerboxxx/The Love Below.","Who are Outkast?", true),
+        mk(1000,"This singer's 2007 album Good Girl Gone Bad included 'Umbrella.'","Who is Rihanna?")
+      ]},
+      {name:'2000s Tech', clues:[
+        mk(200,"This Google email service launched by invitation in 2004.","What is Gmail?"),
+        mk(400,"This video-sharing site launched in 2005.","What is YouTube?"),
+        mk(600,"Nintendo released this motion-controlled console in 2006.","What is the Wii?"),
+        mk(800,"This Apple smartphone debuted in 2007.","What is the iPhone?"),
+        mk(1000,"This microblogging service launched publicly in 2006 with a 140-character limit.","What is Twitter?")
+      ]},
+      {name:'2000s Movies', clues:[
+        mk(200,"This 2000 epic stars Russell Crowe as Maximus.","What is Gladiator?"),
+        mk(400,"This 2001 film begins a trilogy about carrying the One Ring to Mordor.","What is The Lord of the Rings: The Fellowship of the Ring?"),
+        mk(600,"This 2004 Pixar film follows a family of superheroes forced out of retirement.","What is The Incredibles?"),
+        mk(800,"This 2006 thriller stars Leonardo DiCaprio and Matt Damon on opposite sides of the law.","What is The Departed?"),
+        mk(1000,"This 2009 comedy begins with a disastrous Las Vegas bachelor party.","What is The Hangover?")
+      ]},
+      {name:'2000s Sports', clues:[
+        mk(200,"This golfer won the 2000 U.S. Open by 15 strokes.","Who is Tiger Woods?"),
+        mk(400,"This country hosted the 2006 FIFA World Cup.","What is Germany?"),
+        mk(600,"This swimmer won eight gold medals at the 2008 Beijing Olympics.","Who is Michael Phelps?"),
+        mk(800,"This NFL quarterback won his first Super Bowl after the 2001 season.","Who is Tom Brady?"),
+        mk(1000,"This tennis player completed a career Grand Slam by winning the 2009 French Open.","Who is Roger Federer?")
+      ]},
+      {name:'2000s Slang & Stuff', clues:[
+        mk(200,"This abbreviation for 'be right back' was common in instant messaging.","What is BRB?"),
+        mk(400,"This Motorola flip phone became one of the decade's signature mobile devices.","What is the Razr?"),
+        mk(600,"This Livestrong charity wristband was most famously this colour.","What is yellow?"),
+        mk(800,"This social network's profile feature let users publicly rank eight friends.","What is the Top 8?"),
+        mk(1000,"This dance game series used a floor pad with directional arrows.","What is Dance Dance Revolution?")
+      ]}
+    ],
+    round2:[
+      {name:'The Year Was...', clues:[
+        mk(400,"The attacks of September 11 occurred in this year.","What is 2001?"),
+        mk(800,"The euro entered circulation as physical notes and coins in this year.","What is 2002?"),
+        mk(1200,"The final episode of Friends aired in this year.","What is 2004?"),
+        mk(1600,"Hurricane Katrina struck the U.S. Gulf Coast in this year.","What is 2005?"),
+        mk(2000,"The global financial crisis intensified after Lehman Brothers collapsed in this year.","What is 2008?")
+      ]},
+      {name:'2000s Albums', clues:[
+        mk(400,"Coldplay released this 2002 album featuring 'Clocks.'","What is A Rush of Blood to the Head?"),
+        mk(800,"Green Day released this 2004 rock opera album.","What is American Idiot?"),
+        mk(1200,"Kanye West's 2004 debut album had this title.","What is The College Dropout?"),
+        mk(1600,"Amy Winehouse's 2006 album featuring 'Rehab' had this title.","What is Back to Black?"),
+        mk(2000,"Arcade Fire's acclaimed 2004 debut album was this.","What is Funeral?")
+      ]},
+      {name:'Reality TV Boom', clues:[
+        mk(400,"This competition strands contestants who vote one another off.","What is Survivor?"),
+        mk(800,"This franchise began in 2002 with a single man dating a group of women.","What is The Bachelor?"),
+        mk(1200,"This fashion competition told eliminated designers, 'You're out.'","What is Project Runway?"),
+        mk(1600,"This MTV reality series followed Lauren Conrad and friends in Los Angeles.","What is The Hills?", true),
+        mk(2000,"This Bravo competition debuted in 2006 and pits chefs against one another.","What is Top Chef?")
+      ]},
+      {name:'Gaming in the 2000s', clues:[
+        mk(400,"This 2001 Xbox launch title starred Master Chief.","What is Halo: Combat Evolved?"),
+        mk(800,"This life-simulation game franchise by Maxis lets players control virtual households.","What is The Sims?"),
+        mk(1200,"This 2004 MMORPG is set in Azeroth.","What is World of Warcraft?"),
+        mk(1600,"This 2007 rhythm game came packaged with a plastic guitar controller.","What is Guitar Hero III?"),
+        mk(2000,"This 2008 Rockstar game follows Niko Bellic in Liberty City.","What is Grand Theft Auto IV?")
+      ]},
+      {name:'Headlines of the Decade', clues:[
+        mk(400,"This social network was founded by Mark Zuckerberg and classmates in 2004.","What is Facebook?"),
+        mk(800,"This dwarf planet lost full planet status in 2006.","What is Pluto?"),
+        mk(1200,"This city hosted the 2008 Summer Olympics.","What is Beijing?"),
+        mk(1600,"This U.S. politician became the first Black president-elect in 2008.","Who is Barack Obama?"),
+        mk(2000,"This particle-physics machine near Geneva began operations in 2008.","What is the Large Hadron Collider?")
+      ]},
+      {name:'Millennial Memory Test', clues:[
+        mk(400,"This fuzzy electronic toy would say 'Feed me!' and learn English over time.","What is Furby?"),
+        mk(800,"This Microsoft messaging service was widely known as MSN Messenger.","What is MSN Messenger?"),
+        mk(1200,"This teen magazine's title shares its name with an age just below twenty.","What is Seventeen?"),
+        mk(1600,"This ringtone format often imitated songs using a single synthesized melody line.","What is monophonic?"),
+        mk(2000,"This online encyclopedia launched in 2001 and became a default research stop for students.","What is Wikipedia?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g7', title:'Turn It Up', blurb:'An all-music board — name the song, band geography, instruments, and music history.',
+    finalQ:{question:"This 1977 Fleetwood Mac album, recorded amid intense relationship turmoil within the band, became one of the best-selling albums ever.", answer:"What is Rumours?"},
+    round1:[
+      {name:'Name the Song', clues:[
+        mk(200,"Adele sings this breakup anthem whose title asks a former lover to find a person similar to her.","What is 'Someone Like You'?"),
+        mk(400,"The Killers released this enduring 2003 song about jealousy and suspicion.","What is 'Mr. Brightside'?"),
+        mk(600,"Outkast's André 3000 leads this 2003 smash whose title is a two-word greeting.","What is 'Hey Ya!'?"),
+        mk(800,"Miley Cyrus's 2013 ballad shares its title with a heavy demolition tool.","What is 'Wrecking Ball'?"),
+        mk(1000,"The Weeknd's 2019 hit references being unable to see clearly without a lover.","What is 'Blinding Lights'?")
+      ]},
+      {name:'Band Geography', clues:[
+        mk(200,"U2 formed in this Irish capital.","What is Dublin?"),
+        mk(400,"Nirvana emerged from the music scene around this Washington-state city.","What is Seattle?"),
+        mk(600,"Oasis formed in this English city.","What is Manchester?"),
+        mk(800,"ABBA came from this Scandinavian country.","What is Sweden?"),
+        mk(1000,"Tame Impala originated in this Australian city.","What is Perth?")
+      ]},
+      {name:'Instruments', clues:[
+        mk(200,"This instrument has 88 keys on a standard modern version.","What is the piano?"),
+        mk(400,"This brass instrument uses a slide rather than valves to change pitch.","What is the trombone?"),
+        mk(600,"This string instrument is typically played under the chin with a bow.","What is the violin?"),
+        mk(800,"This woodwind instrument uses a double reed and often gives the orchestra its tuning A.","What is the oboe?", true),
+        mk(1000,"This keyboard instrument produces sound by plucking strings mechanically.","What is the harpsichord?")
+      ]},
+      {name:'Sports Anthems', clues:[
+        mk(200,"'We Will Rock You' by Queen is a staple at these kinds of venues.","What are sports arenas/stadiums?"),
+        mk(400,"This song by Survivor is forever associated with Rocky III.","What is 'Eye of the Tiger'?"),
+        mk(600,"This Neil Diamond song is a singalong tradition at Boston Red Sox games.","What is 'Sweet Caroline'?"),
+        mk(800,"This White Stripes song's seven-note riff became a worldwide stadium chant.","What is 'Seven Nation Army'?"),
+        mk(1000,"This 1990 dance track by 2 Unlimited is often blasted after goals and big plays.","What is 'Get Ready for This'?")
+      ]},
+      {name:'Album Covers', clues:[
+        mk(200,"A baby swimming toward a dollar bill appears on the cover of this Nirvana album.","What is Nevermind?"),
+        mk(400,"A prism refracting light appears on this Pink Floyd album.","What is The Dark Side of the Moon?"),
+        mk(600,"The Beatles walk across a zebra crossing on this 1969 album cover.","What is Abbey Road?"),
+        mk(800,"A burning man shaking hands appears on this Pink Floyd album.","What is Wish You Were Here?"),
+        mk(1000,"A peach-toned sky and a blond figure appear on this Frank Ocean album cover.","What is Blonde?")
+      ]},
+      {name:'Music Numbers', clues:[
+        mk(200,"A standard guitar usually has this many strings.","What is 6?"),
+        mk(400,"A musical octave spans this many named notes before the pattern repeats.","What is 8?"),
+        mk(600,"A common time signature written 4/4 has this many quarter-note beats per bar.","What is 4?"),
+        mk(800,"A standard diatonic major scale contains this many distinct note names before the octave repeats.","What is 7?"),
+        mk(1000,"Beethoven completed this many numbered symphonies.","What is 9?")
+      ]}
+    ],
+    round2:[
+      {name:'Women in Music', clues:[
+        mk(400,"This singer-songwriter released Jagged Little Pill in 1995.","Who is Alanis Morissette?"),
+        mk(800,"This artist's visual album Lemonade was released in 2016.","Who is Beyoncé?"),
+        mk(1200,"This Icelandic singer released Post and Homogenic.","Who is Björk?"),
+        mk(1600,"This singer fronted No Doubt before launching a solo career.","Who is Gwen Stefani?"),
+        mk(2000,"This British artist released the critically acclaimed 2019 album MAGDALENE.","Who is FKA twigs?")
+      ]},
+      {name:'Finish the Artist', clues:[
+        mk(400,"Florence + this.","What is the Machine?"),
+        mk(800,"Mumford & this plural noun.","What are Sons?"),
+        mk(1200,"Tegan and this twin sister.","Who is Sara?"),
+        mk(1600,"Edward Sharpe & these 'Zeroes.'","What are the Magnetic Zeros?"),
+        mk(2000,"Portugal. this definite article plus a noun.","What is the Man?")
+      ]},
+      {name:'Music History', clues:[
+        mk(400,"This city is widely considered the birthplace of grunge.","What is Seattle?"),
+        mk(800,"This 1969 festival took place on a dairy farm in Bethel, New York.","What is Woodstock?"),
+        mk(1200,"This record label founded by Berry Gordy became synonymous with Detroit soul.","What is Motown?", true),
+        mk(1600,"This New York club at 315 Bowery became a cradle of punk rock.","What is CBGB?"),
+        mk(2000,"This producer's 'Wall of Sound' technique layered instruments densely on 1960s recordings.","Who is Phil Spector?")
+      ]},
+      {name:'Genres', clues:[
+        mk(400,"This genre grew from Jamaican ska and rocksteady and is strongly associated with Bob Marley.","What is reggae?"),
+        mk(800,"This electronic genre originated in Chicago clubs in the early 1980s.","What is house music?"),
+        mk(1200,"This heavy, distorted rock subgenre emerged from Seattle in the late 1980s and early 1990s.","What is grunge?"),
+        mk(1600,"This Brazilian style blends samba rhythms with jazz harmony and includes 'The Girl from Ipanema.'","What is bossa nova?"),
+        mk(2000,"This New Orleans-rooted music combines African American musical traditions with improvisation.","What is jazz?")
+      ]},
+      {name:'Samples & Covers', clues:[
+        mk(400,"Whitney Houston's 'I Will Always Love You' was written and first recorded by this country star.","Who is Dolly Parton?"),
+        mk(800,"Johnny Cash's late-career version of 'Hurt' covered a song by this industrial rock band.","Who are Nine Inch Nails?"),
+        mk(1200,"Jimi Hendrix famously covered 'All Along the Watchtower,' written by this songwriter.","Who is Bob Dylan?"),
+        mk(1600,"Soft Cell's 'Tainted Love' was first recorded by this soul singer in 1964.","Who is Gloria Jones?"),
+        mk(2000,"Aretha Franklin turned 'Respect' into an anthem after it was first recorded by this soul singer.","Who is Otis Redding?", true)
+      ]},
+      {name:'Music Theory Lite', clues:[
+        mk(400,"A chord containing the root, third and fifth is called this.","What is a triad?"),
+        mk(800,"In a major scale, the seventh scale degree is often called this because it resolves upward to the tonic.","What is the leading tone?"),
+        mk(1200,"The relative minor of C major is this key.","What is A minor?"),
+        mk(1600,"This Italian term tells a musician to gradually get louder.","What is crescendo?"),
+        mk(2000,"A shift from one key to another is called this.","What is modulation?")
+      ]}
+    ]
+  },
+  {
+    id:'g8', title:'Wild, Fast & Competitive', blurb:'Animal speed, sports rules, food origins, movie animals, and sports science.',
+    finalQ:{question:"This mammal has the largest brain of any animal by mass.", answer:"What is the sperm whale?"},
+    round1:[
+      {name:'Animal Speed', clues:[
+        mk(200,"This spotted cat is the fastest land animal.","What is the cheetah?"),
+        mk(400,"This bird is the fastest animal when diving, exceeding 300 km/h.","What is the peregrine falcon?"),
+        mk(600,"This fish is often cited among the fastest in the ocean and has a long pointed bill.","What is the sailfish?"),
+        mk(800,"This African antelope can sustain high speeds over long distances and is a favourite cheetah prey animal.","What is the springbok?"),
+        mk(1000,"This tiny bird can beat its wings dozens of times per second and hover in place.","What is the hummingbird?")
+      ]},
+      {name:'Sports Rules', clues:[
+        mk(200,"In soccer, only this player may normally handle the ball within the penalty area.","Who is the goalkeeper?"),
+        mk(400,"In basketball, a free throw is worth this many points.","What is 1?"),
+        mk(600,"In hockey, icing generally involves shooting the puck from behind this line across the opponent's goal line untouched.","What is the centre red line?"),
+        mk(800,"In baseball, a batter is out after this many strikes.","What is 3?"),
+        mk(1000,"In volleyball, a team may touch the ball no more than this many times before sending it over the net, excluding a block.","What is 3?")
+      ]},
+      {name:'Food Origins', clues:[
+        mk(200,"Tacos are most closely associated with this country.","What is Mexico?"),
+        mk(400,"Croissants are strongly associated with France, but their ancestry is often linked to this Austrian city.","What is Vienna?"),
+        mk(600,"Poutine originated in this Canadian province.","What is Quebec?"),
+        mk(800,"The modern hamburger takes its name from this German city.","What is Hamburg?"),
+        mk(1000,"Tempura developed in Japan partly under influence from traders and missionaries from this European country.","What is Portugal?", true)
+      ]},
+      {name:'World Islands', clues:[
+        mk(200,"Honolulu is on this Hawaiian island.","What is Oahu?"),
+        mk(400,"Reykjavík is the capital of this island country.","What is Iceland?"),
+        mk(600,"Palermo is the capital of this Italian island.","What is Sicily?"),
+        mk(800,"This Indonesian island is famous for Ubud and Denpasar.","What is Bali?"),
+        mk(1000,"This Tanzanian archipelago's main island is Unguja, commonly known by the archipelago's name.","What is Zanzibar?")
+      ]},
+      {name:'Movie Animals', clues:[
+        mk(200,"This clownfish is separated from his father Marlin in a 2003 Pixar film.","Who is Nemo?"),
+        mk(400,"This Great Dane solves mysteries with Shaggy and the gang.","Who is Scooby-Doo?"),
+        mk(600,"This lion cub grows up to reclaim Pride Rock.","Who is Simba?"),
+        mk(800,"This collie became famous for repeatedly rescuing people and finding her way home.","Who is Lassie?"),
+        mk(1000,"This capuchin monkey belongs to Ross on Friends.","Who is Marcel?")
+      ]},
+      {name:'Stadium Geography', clues:[
+        mk(200,"Fenway Park is home to this MLB team.","Who are the Boston Red Sox?"),
+        mk(400,"Camp Nou is historically home to this football club.","What is FC Barcelona?"),
+        mk(600,"Madison Square Garden is in this city.","What is New York City?"),
+        mk(800,"Wembley Stadium is in this capital city.","What is London?"),
+        mk(1000,"The Melbourne Cricket Ground is in this Australian state.","What is Victoria?")
+      ]}
+    ],
+    round2:[
+      {name:'Animal Intelligence', clues:[
+        mk(400,"This marine mammal is famous for echolocation and complex social behaviour.","What is the dolphin?"),
+        mk(800,"This bird family, including crows and ravens, is known for tool use and problem solving.","What are corvids?"),
+        mk(1200,"This cephalopod can solve puzzles, open jars and escape enclosures.","What is the octopus?"),
+        mk(1600,"This great ape has been observed using sticks to fish for termites.","What is the chimpanzee?"),
+        mk(2000,"Alex, a famous research animal studied by Irene Pepperberg, was this species of parrot.","What is an African grey parrot?")
+      ]},
+      {name:'Major Championships', clues:[
+        mk(400,"The Masters golf tournament is played annually at this course.","What is Augusta National?"),
+        mk(800,"The tennis tournament played on red clay in Paris is this Grand Slam.","What is the French Open?"),
+        mk(1200,"The Grey Cup is awarded in this Canadian league.","What is the CFL?"),
+        mk(1600,"The Borg-Warner Trophy is associated with this auto race.","What is the Indianapolis 500?"),
+        mk(2000,"Cycling's rainbow jersey is awarded to the winner of this annual title race.","What is the UCI Road World Championship?")
+      ]},
+      {name:'Extreme Geography', clues:[
+        mk(400,"This desert stretches across much of North Africa.","What is the Sahara?"),
+        mk(800,"This is the longest mountain range on land.","What are the Andes?"),
+        mk(1200,"This salty body of water between Jordan and Israel lies far below sea level.","What is the Dead Sea?", true),
+        mk(1600,"This plateau, often called the 'Roof of the World,' lies north of the Himalayas.","What is the Tibetan Plateau?"),
+        mk(2000,"This Antarctic ice shelf is the largest in the world.","What is the Ross Ice Shelf?")
+      ]},
+      {name:'Predator or Prey?', clues:[
+        mk(400,"This spotted African cat often hunts gazelles but must protect its kills from larger carnivores.","What is the cheetah?"),
+        mk(800,"This Arctic predator primarily hunts seals from sea ice.","What is the polar bear?"),
+        mk(1200,"This ambush reptile can launch from water with enormous bite force.","What is the crocodile?"),
+        mk(1600,"This tiny crustacean forms a major food source for baleen whales.","What is krill?"),
+        mk(2000,"This venomous marine snail harpoons prey using a modified tooth.","What is a cone snail?")
+      ]},
+      {name:'Sports Science', clues:[
+        mk(400,"This molecule is the body's immediate energy currency for muscle contraction.","What is ATP?"),
+        mk(800,"This type of muscle fibre is generally better suited to endurance activity.","What are slow-twitch fibres?"),
+        mk(1200,"VO2 max measures the body's maximum ability to use this gas during exercise.","What is oxygen?"),
+        mk(1600,"This electrolyte is commonly lost in sweat and is the main cation in extracellular fluid.","What is sodium?"),
+        mk(2000,"The lactate threshold refers to the exercise intensity above which this compound begins accumulating rapidly in blood.","What is lactate?", true)
+      ]},
+      {name:'Record Breakers', clues:[
+        mk(400,"This Jamaican sprinter holds the men's 100m world record of 9.58 seconds.","Who is Usain Bolt?"),
+        mk(800,"This NHL player finished his career with 894 goals, a record later surpassed in 2025.","Who is Wayne Gretzky?"),
+        mk(1200,"This swimmer won 28 Olympic medals, the most by any Olympian.","Who is Michael Phelps?"),
+        mk(1600,"This NBA player scored 100 points in one game in 1962.","Who is Wilt Chamberlain?"),
+        mk(2000,"This tennis player won 24 Grand Slam men's singles titles, tying the all-time singles record.","Who is Novak Djokovic?")
+      ]}
+    ]
+  },
+  {
+    id:'g9', title:'Screen Time', blurb:'Rom-coms, TV theme songs, movie food, prestige TV, and Broadway musicals.',
+    finalQ:{question:"This 1927 film is commonly credited as the first feature-length 'talkie' with synchronized dialogue sequences.", answer:"What is The Jazz Singer?"},
+    round1:[
+      {name:'Rom-Coms', clues:[
+        mk(200,"Julia Roberts plays a movie star who falls for a bookseller in this 1999 film.","What is Notting Hill?"),
+        mk(400,"This 2003 film follows ten interconnected love stories in London around Christmas.","What is Love Actually?"),
+        mk(600,"Sandra Bullock pretends to be engaged to Ryan Reynolds in this 2009 comedy.","What is The Proposal?"),
+        mk(800,"This 2001 film stars Reese Witherspoon as Elle Woods heading to Harvard Law.","What is Legally Blonde?"),
+        mk(1000,"This 2008 film has Jason Segel's character travel to Hawaii after a breakup.","What is Forgetting Sarah Marshall?")
+      ]},
+      {name:'TV Theme Songs', clues:[
+        mk(200,"'I'll be there for you' is associated with this sitcom.","What is Friends?"),
+        mk(400,"The theme 'California' by Phantom Planet opens this teen drama.","What is The O.C.?"),
+        mk(600,"'Woke Up This Morning' opens this HBO mob drama.","What is The Sopranos?"),
+        mk(800,"The instrumental 'Teardrop' by Massive Attack served as the theme for this medical drama.","What is House?"),
+        mk(1000,"The song 'Boss of Me' opens this sitcom about a gifted middle child.","What is Malcolm in the Middle?")
+      ]},
+      {name:'Movie Food', clues:[
+        mk(200,"Remy dreams of becoming a chef in this Pixar film.","What is Ratatouille?"),
+        mk(400,"A magical chocolate factory belongs to this eccentric character.","Who is Willy Wonka?"),
+        mk(600,"This 2014 film stars Jon Favreau as a chef who starts a food truck.","What is Chef?"),
+        mk(800,"This 2009 film dramatizes Julia Child and blogger Julie Powell.","What is Julie & Julia?", true),
+        mk(1000,"This 1985 Japanese 'ramen western' centres on perfecting a noodle shop.","What is Tampopo?")
+      ]},
+      {name:'Celebrity Sports Fans', clues:[
+        mk(200,"This rapper from Toronto is famously courtside at Raptors games.","Who is Drake?"),
+        mk(400,"Spike Lee is famously associated with courtside seats for this NBA team.","Who are the New York Knicks?"),
+        mk(600,"Jack Nicholson was long a prominent courtside fan of this NBA franchise.","Who are the Los Angeles Lakers?"),
+        mk(800,"Snoop Dogg is a well-known fan of this NFL team from Pittsburgh.","Who are the Pittsburgh Steelers?"),
+        mk(1000,"Elton John became chairman and remains closely associated with this English football club.","What is Watford FC?")
+      ]},
+      {name:'Animated Favourites', clues:[
+        mk(200,"This ogre lives in a swamp and marries Princess Fiona.","Who is Shrek?"),
+        mk(400,"This Pixar film is set largely inside the mind of Riley.","What is Inside Out?"),
+        mk(600,"This Disney film follows a Polynesian teenager chosen by the ocean.","What is Moana?"),
+        mk(800,"This 2009 stop-motion film features a girl discovering an alternate family behind a small door.","What is Coraline?"),
+        mk(1000,"This 1999 animated film follows a giant robot who befriends a boy named Hogarth.","What is The Iron Giant?")
+      ]},
+      {name:'Famous Duos', clues:[
+        mk(200,"This cartoon cat is constantly chasing Jerry.","Who is Tom?"),
+        mk(400,"Timon's warthog best friend is this character.","Who is Pumbaa?"),
+        mk(600,"Sherlock Holmes's physician friend and chronicler is this man.","Who is Dr. Watson?"),
+        mk(800,"Outkast consists of André 3000 and this rapper.","Who is Big Boi?"),
+        mk(1000,"The tennis-playing Williams sisters are Venus and this younger sister.","Who is Serena Williams?")
+      ]}
+    ],
+    round2:[
+      {name:'Prestige TV', clues:[
+        mk(400,"The Roy family controls this fictional media conglomerate in Succession.","What is Waystar Royco?"),
+        mk(800,"Walter White uses this alias in the drug trade.","Who is Heisenberg?"),
+        mk(1200,"Don Draper works in this industry on Mad Men.","What is advertising?"),
+        mk(1600,"In The Wire, this Baltimore police unit focuses heavily on this kind of investigation.","What are wiretaps/electronic surveillance?"),
+        mk(2000,"In The White Lotus Season 1, the resort is located on this Hawaiian island.","What is Maui?")
+      ]},
+      {name:'Directors', clues:[
+        mk(400,"This director made Jaws, E.T. and Jurassic Park.","Who is Steven Spielberg?"),
+        mk(800,"This director made Pulp Fiction and Kill Bill.","Who is Quentin Tarantino?"),
+        mk(1200,"This director made Get Out and Nope.","Who is Jordan Peele?"),
+        mk(1600,"This director made Lady Bird and Barbie.","Who is Greta Gerwig?"),
+        mk(2000,"This South Korean director made Memories of Murder and Parasite.","Who is Bong Joon Ho?")
+      ]},
+      {name:'Broadway & Musicals', clues:[
+        mk(400,"This musical tells the story of Alexander Hamilton using hip-hop and R&B.","What is Hamilton?"),
+        mk(800,"Elphaba and Glinda are central characters in this musical.","What is Wicked?"),
+        mk(1200,"This musical features the songs 'One Night Only' and 'And I Am Telling You I'm Not Going.'","What is Dreamgirls?"),
+        mk(1600,"This Jonathan Larson musical follows artists living in New York's East Village.","What is Rent?", true),
+        mk(2000,"This Stephen Sondheim musical intertwines several Brothers Grimm fairy tales.","What is Into the Woods?")
+      ]},
+      {name:'Film Locations', clues:[
+        mk(400,"The Shire scenes in The Lord of the Rings were filmed primarily in this country.","What is New Zealand?"),
+        mk(800,"The Dubrovnik old town was used heavily as King's Landing in this HBO series.","What is Game of Thrones?"),
+        mk(1200,"The Overlook Hotel's exterior in The Shining used Timberline Lodge in this U.S. state.","What is Oregon?"),
+        mk(1600,"Many desert scenes in Dune were filmed in Wadi Rum, located in this country.","What is Jordan?"),
+        mk(2000,"The hilltop village of Matera in this country appeared in No Time to Die.","What is Italy?")
+      ]},
+      {name:'Oscar Categories', clues:[
+        mk(400,"This award goes to the film judged best overall.","What is Best Picture?"),
+        mk(800,"This category honours music written specifically as background music for a film.","What is Best Original Score?"),
+        mk(1200,"This award recognizes the person responsible for assembling a film's shots into its final sequence.","What is Best Film Editing?"),
+        mk(1600,"This category honours the visual recording and lighting of a film.","What is Best Cinematography?"),
+        mk(2000,"This category was renamed in 2020 from Best Foreign Language Film.","What is Best International Feature Film?")
+      ]},
+      {name:'Cult Classics', clues:[
+        mk(400,"This 1975 musical comedy invites audiences to a strange castle with Dr. Frank-N-Furter.","What is The Rocky Horror Picture Show?"),
+        mk(800,"This 1998 film follows 'The Dude' after a rug-related case of mistaken identity.","What is The Big Lebowski?"),
+        mk(1200,"This 2001 film centres on Donnie and a mysterious rabbit figure named Frank.","What is Donnie Darko?"),
+        mk(1600,"This 2003 film about a disastrous movie production later inspired The Disaster Artist.","What is The Room?"),
+        mk(2000,"This 1988 dark comedy stars Winona Ryder and Christian Slater at Westerburg High.","What is Heathers?", true)
+      ]}
+    ]
+  },
+  {
+    id:'g10', title:'Classic Jeopardy Mix', blurb:'A traditional, general-knowledge board — capitals, food, animals A-Z, history, and literature.',
+    finalQ:{question:"This ancient city, buried by Mount Vesuvius in 79 CE, was rediscovered and became one of archaeology's most famous sites.", answer:"What is Pompeii?"},
+    round1:[
+      {name:'World Capitals', clues:[
+        mk(200,"This is the capital of Japan.","What is Tokyo?"),
+        mk(400,"This is the capital of Portugal.","What is Lisbon?"),
+        mk(600,"This is the capital of Kenya.","What is Nairobi?"),
+        mk(800,"This is the capital of Vietnam.","What is Hanoi?"),
+        mk(1000,"This is the capital of Kazakhstan.","What is Astana?")
+      ]},
+      {name:'Food & Drink', clues:[
+        mk(200,"Guacamole is made primarily from this fruit.","What is avocado?"),
+        mk(400,"This spirit is traditionally made from blue agave.","What is tequila?"),
+        mk(600,"This Japanese seasoning paste is made from fermented soybeans and koji.","What is miso?"),
+        mk(800,"This cheese is traditionally used in a Greek salad.","What is feta?"),
+        mk(1000,"This coffee drink combines espresso with steamed milk and a thin layer of foam.","What is a latte?")
+      ]},
+      {name:'Animals A-Z', clues:[
+        mk(200,"This long-necked African mammal begins with G.","What is giraffe?"),
+        mk(400,"This striped African equine begins with Z.","What is zebra?"),
+        mk(600,"This semiaquatic Australian egg-laying mammal begins with P.","What is platypus?"),
+        mk(800,"This armoured mammal that rolls into a ball begins with A.","What is armadillo?", true),
+        mk(1000,"This nocturnal primate of Madagascar with huge eyes begins with A.","What is an aye-aye?")
+      ]},
+      {name:'Sports Around the World', clues:[
+        mk(200,"This sport uses a shuttlecock.","What is badminton?"),
+        mk(400,"This sport's major international tournament awards the Webb Ellis Cup.","What is rugby union?"),
+        mk(600,"In curling, teams slide stones toward this target area.","What is the house?"),
+        mk(800,"This sport features the pommel horse, rings and parallel bars.","What is artistic gymnastics?"),
+        mk(1000,"In cricket, a batter scoring 100 runs in one innings has achieved this.","What is a century?")
+      ]},
+      {name:'Famous Places', clues:[
+        mk(200,"The Taj Mahal is in this Indian city.","What is Agra?"),
+        mk(400,"The Acropolis overlooks this capital.","What is Athens?"),
+        mk(600,"The Golden Gate Bridge spans an entrance to this California city.","What is San Francisco?"),
+        mk(800,"The Forbidden City stands in this capital.","What is Beijing?"),
+        mk(1000,"The ancient rock city of Petra lies in this country.","What is Jordan?")
+      ]},
+      {name:'General Knowledge', clues:[
+        mk(200,"There are this many sides on a hexagon.","What is 6?"),
+        mk(400,"This is the chemical symbol for silver.","What is Ag?"),
+        mk(600,"This author created Sherlock Holmes.","Who is Arthur Conan Doyle?"),
+        mk(800,"This ocean lies between Africa, Asia and Australia.","What is the Indian Ocean?"),
+        mk(1000,"This ancient civilization built Machu Picchu.","Who were the Inca?")
+      ]}
+    ],
+    round2:[
+      {name:'Before & After', clues:[
+        mk(400,"A Pixar movie about emotions plus a baseball term for a pitch near the batter.","What is Inside Out pitch?"),
+        mk(800,"A Queen anthem plus the HBO fantasy series about Westeros.","What is We Will Rock You Game of Thrones?"),
+        mk(1200,"A famous Paris tower plus the card game using wild draw-four cards.","What is Eiffel Tower UNO?"),
+        mk(1600,"A Beatles song about a Jude plus the Law & Order actor with the same first name.","What is 'Hey Jude' Law?"),
+        mk(2000,"A classic Spielberg alien plus the Extra-Terrestrial's favourite candy brand.","What is E.T. Reese's Pieces?")
+      ]},
+      {name:'Science', clues:[
+        mk(400,"This is the closest star to Earth.","What is the Sun?"),
+        mk(800,"This element has atomic number 6.","What is carbon?"),
+        mk(1200,"This process allows plants to convert light energy into chemical energy.","What is photosynthesis?", true),
+        mk(1600,"This blood type is commonly called the universal red-cell donor.","What is O negative?"),
+        mk(2000,"This SI unit measures electrical resistance.","What is the ohm?")
+      ]},
+      {name:'History', clues:[
+        mk(400,"The Renaissance began in this modern European country.","What is Italy?"),
+        mk(800,"This wall fell in 1989, becoming a symbol of the Cold War's end.","What is the Berlin Wall?"),
+        mk(1200,"This empire was ruled by figures including Augustus, Trajan and Hadrian.","What is the Roman Empire?"),
+        mk(1600,"This 1215 English charter limited royal power and became a landmark in constitutional history.","What is Magna Carta?"),
+        mk(2000,"This 1648 settlement ended the Thirty Years' War.","What is the Peace of Westphalia?")
+      ]},
+      {name:'Literature', clues:[
+        mk(400,"George Orwell wrote this dystopian novel about Big Brother.","What is 1984?"),
+        mk(800,"This author wrote Pride and Prejudice.","Who is Jane Austen?"),
+        mk(1200,"This novel opens with Ishmael joining a whaling voyage aboard the Pequod.","What is Moby-Dick?"),
+        mk(1600,"This Gabriel García Márquez novel chronicles generations of the Buendía family.","What is One Hundred Years of Solitude?"),
+        mk(2000,"This Russian author wrote The Brothers Karamazov.","Who is Fyodor Dostoevsky?")
+      ]},
+      {name:'Potent Potables', clues:[
+        mk(400,"Gin is the base spirit in a classic martini.","What is gin?"),
+        mk(800,"This bitter Italian aperitif is a key ingredient in a Negroni.","What is Campari?"),
+        mk(1200,"This fortified wine comes in styles including fino and oloroso.","What is sherry?"),
+        mk(1600,"This French apple brandy is produced in Normandy.","What is Calvados?"),
+        mk(2000,"This herbal liqueur made by Carthusian monks comes in green and yellow varieties.","What is Chartreuse?", true)
+      ]},
+      {name:'Wordplay', clues:[
+        mk(400,"A word that reads the same forward and backward, like 'level,' is this.","What is a palindrome?"),
+        mk(800,"A word that imitates a sound, like 'buzz,' is an example of this.","What is onomatopoeia?"),
+        mk(1200,"Words such as 'pair' and 'pear' that sound alike but differ in meaning are these.","What are homophones?"),
+        mk(1600,"A phrase whose initial letters form a pronounceable word, like NASA, is this.","What is an acronym?"),
+        mk(2000,"A sentence using every letter of the alphabet, like the one about a quick brown fox, is this.","What is a pangram?")
+      ]}
+    ]
+  },
+  {
     id:'y2k', title:'2000s Throwback', blurb:'A full two-round game built for the millennials in the room — Y2K music, reality TV, gadgets, Disney Channel, and more.',
     finalQ:{question:"This social network, launched in 2004 and originally limited to college students, became the dominant platform of the 2000s.", answer:"What is Facebook?"},
     round1:[
@@ -541,6 +2381,8 @@ function normalizeState(data){
   data.earlyLockUntil = data.earlyLockUntil || {};
   data.earlyBuzzers = data.earlyBuzzers || {};
   data.teams = data.teams || {1:{name:null,score:0},2:{name:null,score:0},3:{name:null,score:0}};
+  if(data.phase==='daily_double' && data.ddWager===undefined) data.ddWager = {team:0, amount:null};
+  else if(data.ddWager) data.ddWager.team = data.ddWager.team || 0;
   if(!data.final) data.final = {stage:'wager', wagers:{}, answers:{}, graded:{}};
   else{
     data.final.wagers = data.final.wagers || {};
@@ -1230,7 +3072,7 @@ function renderHostBoard(state){
       const clue=activeCats(state)[c].clues[i], cat=activeCats(state)[c];
       const isDD = clue.dailyDouble;
       if(!isDD){
-        speakClue(cat.name, clue.value, clue.text, ()=>{
+        speakClue('', '', clue.text, ()=>{
           mutate(s=>{
             if(s.activeClue && s.activeClue.c===c && s.activeClue.i===i){
               s.readingInProgress=false; s.buzzerOpen=true;
@@ -1245,7 +3087,7 @@ function renderHostBoard(state){
       mutate(s=>{
         s.activeClue={c,i}; s.revealAnswer=false; s.lockedOutTeams=[]; s.buzzedTeam=null; s.buzzedPlayer=null;
         s.earlyLockUntil={}; s.earlyBuzzers={}; s.answerDeadline=null;
-        if(isDD){ s.phase='daily_double'; s.ddStage='wager'; s.ddWager={team:s.controllingTeam||null, amount:null}; s.readingInProgress=false; s.buzzerOpen=false; s.readEndsAt=null; }
+        if(isDD){ s.phase='daily_double'; s.ddStage='wager'; s.ddWager={team:s.controllingTeam||0, amount:null}; s.readingInProgress=false; s.buzzerOpen=false; s.readEndsAt=null; }
         else { s.phase='clue'; s.readingInProgress=true; s.buzzerOpen=false; s.readEndsAt=Date.now()+estMs; }
       });
     };
@@ -1332,7 +3174,7 @@ function renderHostDailyDouble(state){
 
   if(state.ddStage==='reveal' && lastSpokenDD !== ddKey){
     lastSpokenDD = ddKey;
-    speakClue(cat.name, '', clue.text, ()=>{
+    speakClue('', '', clue.text, ()=>{
       mutate(s=>{
         if(s.activeClue && s.activeClue.c===state.activeClue.c && s.activeClue.i===state.activeClue.i && s.ddStage==='reveal'){
           s.answerDeadline = Date.now()+5000;
@@ -1419,6 +3261,7 @@ function renderHostFinal(state){
       ` : ''}
       ${f.stage==='reading' ? `<div class="center" style="margin-top:14px;"><button class="btn secondary" id="skipFinalReading">Skip Reading / Start Timer Now</button></div>` : ''}
       ${f.stage==='answer' ? `<div class="hint" style="margin:14px 0;">Captains answered: ${answersIn.length}/${actives.length}</div>
+        ${answersIn.length>=actives.length ? `<div class="reading-status" style="color:var(--teal);margin-bottom:10px;">✅ All teams have answered — ready to grade!</div>` : ''}
         <button class="btn block" id="startGrading" ${answersIn.length<actives.length?'disabled':''}>Start Grading →</button>` : ''}
       ${f.stage==='grading' ? `<div class="judge-hint">💡 Doesn't need to be exact phrasing — judge on substance.</div>
         <div class="stack" style="margin-top:10px;">
@@ -1938,8 +3781,13 @@ function renderDisplayFinal(state){
         <div class="hint center" style="margin-top:14px;">
           ${f.stage==='wager' ? `Captains locked in: ${actives.filter(n=>f.wagers[n]!==undefined).length}/${actives.length}` : ''}
           ${f.stage==='answer' ? `Captains answered: ${actives.filter(n=>f.answers[n]!==undefined).length}/${actives.length}` : ''}
-          ${f.stage==='grading' ? 'The host is judging answers…' : ''}
         </div>
+        ${f.stage==='grading' ? `<div class="stack" style="margin-top:10px;">
+          ${actives.map(n=>`<div class="kv" style="align-items:center;border-left:5px solid ${TEAM_COLORS[n]};padding:10px 14px;border-radius:10px;">
+            <div><b>${escapeHtml(teamDisplayName(state,n))}</b> wagered ${fmt(f.wagers[n]||0)}${f.graded[n]!==undefined ? `<br><span class="hint">"${escapeHtml(f.answers[n]||'(no answer)')}"</span>` : ''}</div>
+            <div>${f.graded[n]===undefined ? `<span class="hint">judging…</span>` : `<span style="color:${f.graded[n]?'var(--teal)':'var(--red)'};font-weight:700;">${f.graded[n]?'✔ Correct':'✘ Wrong'}</span>`}</div>
+          </div>`).join('')}
+        </div>` : ''}
       `}
       ${teamScoreboardHtml(state)}
     </div>
