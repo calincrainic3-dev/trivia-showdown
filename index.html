@@ -188,7 +188,7 @@ const STANDARD_PACKS = [
       {name:'Wild Favorites', clues:[
         mk(200,"This is the largest land animal on Earth, found roaming the African savanna.","What is the elephant?"),
         mk(400,"This playful marine mammal is known for cracking open shellfish on its belly using a rock as a tool.","What is the sea otter?"),
-        mk(600,"This is the largest animal to have ever lived — swimming alongside one is at the top of Shayla's bucket list.","What is the blue whale?"),
+        mk(600,"This is the largest animal to have ever lived — it's always been Shayla's dream to swim alongside one.","What is the blue whale?"),
         mk(800,"This is one of the smallest antelope species in the world, about the size of a rabbit, found in East African bushland.","What is a dik-dik?"),
         mk(1000,"This critically endangered great ape, found in the misty mountains of Central Africa, is the other item at the top of Shayla's bucket list.","What is the mountain gorilla?")
       ]},
@@ -3756,13 +3756,21 @@ function renderDisplayClue(state){
 }
 function renderDisplayDailyDouble(state){
   const cat = activeCats(state)[state.activeClue.c];
+  const clue = activeCats(state)[state.activeClue.c].clues[state.activeClue.i];
   const wagerTeam = state.ddWager.team;
+  const secsLeft = state.ddStage==='reveal' && state.answerDeadline ? Math.max(0, Math.ceil((state.answerDeadline-Date.now())/1000)) : null;
   app.innerHTML = `
     ${topbarRoom(state,'Display')}
     <div class="spotlight">
       <div class="cat-label" style="color:var(--red);">⭐ DAILY DOUBLE ⭐</div>
-      <div class="value">${escapeHtml(cat.name)}</div>
-      <div class="hint" style="margin-top:14px;">${wagerTeam ? `${escapeHtml(teamDisplayName(state,wagerTeam))} ${state.ddStage==='wager' ? 'is wagering…' : `wagered ${fmt(state.ddWager.amount)}${state.ddWager.trueDD?' — True Daily Double! 🌟':''}`}` : 'Choosing who wagers…'}</div>
+      ${state.ddStage==='reveal' ? `<div class="clue-text">${escapeHtml(clue.text)}</div>` : `<div class="value">${escapeHtml(cat.name)}</div>`}
+    </div>
+    <div class="reading-status">
+      ${wagerTeam ? (
+        state.ddStage==='wager'
+          ? `${escapeHtml(teamDisplayName(state,wagerTeam))} is wagering…`
+          : `🟢 ${escapeHtml(teamDisplayName(state,wagerTeam))} wagered ${fmt(state.ddWager.amount)}${state.ddWager.trueDD?' — True Daily Double! 🌟':''}${secsLeft!==null?(secsLeft>0?` (${secsLeft}s to answer)`:' — judging…'):''}`
+      ) : 'Choosing who wagers…'}
     </div>
     ${teamScoreboardHtml(state)}
   `;
